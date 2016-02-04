@@ -21,11 +21,13 @@ public class Logitech extends Joystick{
 	
 	public boolean getToggledButton(ButtonType bt){
 		
+		return bt.toggled;
+	}
+	
+	public void toggleButton(ButtonType bt){
 		if(getRisingEdge(bt)){
 			bt.toggled = !bt.toggled;
 		}
-		
-		return bt.toggled;
 	}
 	
 	public double getDeadAxis(AxisType at){

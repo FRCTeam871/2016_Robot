@@ -1,12 +1,14 @@
 
 package org.usfirst.frc.team871.robot;
 
+import org.usfirst.frc.team871.robot.Logitech.AxisType;
 import org.usfirst.frc.team871.robot.Logitech.ButtonType;
 import org.usfirst.frc.team871.robot.Shooter.ShootStates;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,19 +26,19 @@ public class Robot extends IterativeRobot {
     String autoSelected;
     SendableChooser chooser;
 	
-    Drive tankDrive;
+    private Drive tankDrive;
     
-    Talon driveL, driveR;
+    public static Logitech stickJoy, stickJoy2;
     
-    Logitech stickJoy;
+    private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos1, beaterBarPos2, beaterBarRoller, winch, driveL, driveR;
     
-    Talon aimShooter, fireMotor1, fireMotor2, beaterBarPos1, beaterBarPos2, beaterBarRoller;
+    private Shooter shoot;
     
-    Shooter shoot;
+    private DigitalInput loadSense, armUpSense, armDownSense, grabSense;
     
-    DigitalInput loadSense;
+    private Solenoid firePiston, liftPiston;
     
-    Solenoid firePiston;
+    private Lifter lift;
     
     /**
      * This function is run when the robot is first started up and should be
@@ -48,23 +50,30 @@ public class Robot extends IterativeRobot {
         chooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", chooser);
         
-        stickJoy = new Logitech(Vars.JOYSTICK_1_PORT);
+        stickJoy  = new Logitech(Vars.JOYSTICK_1_PORT);
+        stickJoy2 = new Logitech(Vars.JOYSTICK_2_PORT);
         
-        driveL = new Talon(Vars.DRIVE_LEFT_PORT);
-        driveR = new Talon(Vars.DRIVE_RIGHT_PORT);
+        winch           = new Talon(Vars.WINCH_PORT);
+        driveL          = new Talon(Vars.DRIVE_LEFT_PORT);
+        driveR          = new Talon(Vars.DRIVE_RIGHT_PORT);
+	    aimShooter      = new Talon(Vars.SHOOTER_AIM_PORT);
+	    fireMotor1      = new Talon(Vars.FIRE_MOTOR_1_PORT);
+	    fireMotor2      = new Talon(Vars.FIRE_MOTOR_2_PORT);
+	    beaterBarPos1   = new Talon(Vars.BEATER_BAR_POS_1_PORT);
+	    beaterBarPos2   = new Talon(Vars.BEATER_BAR_POS_2_PORT);
+	    beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
+        
+        liftPiston = new Solenoid(Vars.LIFT_PISTON_PORT);
+        firePiston = new Solenoid(Vars.FIRE_PISTON_PORT);
+        
+        grabSense  = new DigitalInput(Vars.GRAB_SENSE_PORT);
+        armUpSense = new DigitalInput(Vars.ARM_UP_SENSE_PORT);
+        armDownSense = new DigitalInput(Vars.ARM_DOWN_SENSE_PORT); //TODO: Get this on robot
+        loadSense  = new DigitalInput(Vars.LOADED_SENSE_PORT);
         
         tankDrive = new Drive(driveL, driveR);
         
-        aimShooter = new Talon(Vars.SHOOTER_AIM_PORT);
-        fireMotor1 = new Talon(Vars.FIRE_MOTOR_1_PORT);
-        fireMotor2 = new Talon(Vars.FIRE_MOTOR_2_PORT);
-        beaterBarPos1 = new Talon(Vars.BEATER_BAR_POS_1_PORT);
-        beaterBarPos2 = new Talon(Vars.BEATER_BAR_POS_1_PORT);
-        beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
-        
-        loadSense = new DigitalInput(Vars.LOADED_SENSOR_PORT);
-        
-        firePiston = new Solenoid(Vars.FIRE_PISTON_PORT);
+        lift = new Lifter(winch, liftPiston, grabSense, armUpSense);
         
         shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos1, beaterBarPos2, beaterBarRoller, firePiston);
     }
@@ -103,7 +112,13 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-        
+    	
+    	double axis = stickJoy.getDeadAxis(AxisType.Y);
+    	
+    	tankDrive.driveBothMotors(axis, axis);
+    	
+    	lift.doAuto();
+    	
     	if(stickJoy.getRisingEdge(ButtonType.TWO)){
     		Shooter.setCurrState(ShootStates.MOVE_LOAD);
     	}
