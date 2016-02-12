@@ -1,38 +1,57 @@
 package org.usfirst.frc.team871.robot;
 
-import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
+import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.interfaces.Potentiometer;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 public class Shooter {
 
-	private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos1, beaterBarPos2, beaterBarRoller;
-	
-	private Solenoid firePiston;
-	
-	private static ShootStates currState = ShootStates.AWAIT_INPUT;
-	
+	private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller;
+	private DoubleSolenoid firePiston;
+	private Potentiometer shooterPot;
+	private DigitalInput loadedSense, beaterBarDeployed, beaterBarFolded;
+	private ShootStates currState = ShootStates.AWAIT_INPUT;
 	private boolean enabled = true;
-	
 	private long fireTimer = 0;
+	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
+	double desiredAngle;
+	double centerOfMassX;
+	PIDController pid;
 	
-	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos1, SpeedController beaterBarPos2, SpeedController beaterBarRoller, Solenoid firePiston){
-		this.aimShooter       = aimShooter;
-		this.fireMotor1       = fireMotor1;
-		this.fireMotor2       = fireMotor2;
-		this.beaterBarPos1    = beaterBarPos1;
-		this.beaterBarPos2    = beaterBarPos2;
-		this.beaterBarRoller  = beaterBarRoller;
-		this.firePiston       = firePiston;
+	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, DigitalInput loadedSense, DigitalInput beaterBarDeployed, DigitalInput beaterBarFolded){
+		this.aimShooter        = aimShooter;
+		this.fireMotor1        = fireMotor1;
+		this.fireMotor2        = fireMotor2;
+		this.beaterBarPos      = beaterBarPos;
+		this.beaterBarRoller   = beaterBarRoller;
+		this.firePiston        = firePiston;
+		this.shooterPot        = shooterPot;
+		this.loadedSense       = loadedSense;
+		this.beaterBarDeployed = beaterBarDeployed;
+		this.beaterBarFolded   = beaterBarFolded;
+		
+		pid = new PIDController(1, 0, 0, shooterPot, aimShooter);
+		pid.setPercentTolerance(1);
 	}
 	
-	@SuppressWarnings("unused")
+	
 	public void update(){
+		desiredAngle  = dashboard.getNumber("theta", 0.0);
+		
 		if(enabled){
 			switch (currState) {
 			case AIM:
-				//TODO: Auto Aim
-				fireTimer = System.nanoTime();
-				setCurrState(ShootStates.SPIN_UP);
+				if(!pid.onTarget()){
+					pid.setSetpoint(convertAngleToPotValues(desiredAngle));
+					
+				}else{
+					fireTimer = System.nanoTime();
+					setCurrState(ShootStates.SPIN_UP);
+				}
 				break;
 				
 			case AWAIT_INPUT: //Initial State
@@ -40,19 +59,19 @@ public class Shooter {
 				break;
 				
 			case FIRE:
-				if(true/*BOULDER NOT EXITED*/){ //TODO
-					firePiston.set(true);
+				if(loadedSense.get()){
+					firePiston.set(Value.kForward);
 				}else{
 					fireTimer = System.nanoTime();
 					fireMotor1.set(0);
 					fireMotor2.set(0);
-					firePiston.set(false);
+					firePiston.set(Value.kReverse);
 					setCurrState(ShootStates.SPIN_DOWN);
 				}
 				break;
 				
 			case LOAD_BOULDER:
-				if(true/*NOT LOADED*/){ //TODO
+				if(!loadedSense.get()){
 					beaterBarRoller.set(-1); //TODO: What Direction?
 				}else{
 					beaterBarRoller.set(0);
@@ -61,35 +80,26 @@ public class Shooter {
 				break;
 				
 			case MOVE_LOAD:
-				if(true/*IF ABOVE LOADING POSITION AND NOT IN RANGE*/){ //TODO
-					beaterBarPos1.set(-1);
-					beaterBarPos2.set(-1);
-				}else if(true/*IF BELOW AND NOT IN RANGE*/){ //TODO
-					beaterBarPos1.set(1);
-					beaterBarPos2.set(1);
+				if(!beaterBarDeployed.get()){ //TODO: direction
+					beaterBarPos.set(-1);
 				}else{
-					beaterBarPos1.set(0);
-					beaterBarPos2.set(0);
+					beaterBarPos.set(0);
 					setCurrState(ShootStates.LOAD_BOULDER);
 				}
 				break;
 				
-			case MOVE_TRANSPORT: //TODO: Fix Logic
-				if(true/*IF ABOVE TRANSPORT POSITION AND NOT IN RANGE*/){ //TODO
-					beaterBarPos1.set(-1);
-					beaterBarPos2.set(-1);
-				}else if(true/*IF BELOW AND NOT IN RANGE*/){ //TODO
-					beaterBarPos1.set(1);
-					beaterBarPos2.set(1);
+			case MOVE_TRANSPORT:
+				fireMotor1.set(0);
+				fireMotor2.set(0);
+				
+				if(!beaterBarFolded.get()){
+					beaterBarPos.set(-1);
 				}else{
-					beaterBarPos1.set(0);
-					beaterBarPos2.set(0);
+					beaterBarPos.set(0);
 				}
 				
-				if(true/*IF ABOVE TRANSPORT POSITION AND NOT IN RANGE*/){ //TODO
+				if(Math.abs(shooterPot.get() - Vars.SHOOTER_POT_TRANSPORT_POSITION) > .1 ){ //TODO
 					aimShooter.set(-1);
-				}else if(true/*IF BELOW AND NOT IN RANGE*/){ //TODO
-					aimShooter.set(1);
 				}else{
 					aimShooter.set(0);
 					setCurrState(ShootStates.AWAIT_INPUT);
@@ -101,7 +111,7 @@ public class Shooter {
 					setCurrState(ShootStates.MOVE_TRANSPORT);
 				}else{
 					fireMotor1.set(-1);
-					fireMotor2.set(1); //TODO: Check directions
+					fireMotor2.set(1); //TODO: Check directions/speed
 				}
 				break;
 			case SPIN_UP:
@@ -112,20 +122,16 @@ public class Shooter {
 					fireMotor2.set(-1); //TODO: Check directions
 				}
 				break;
-				
-			default:
-				//Ur Dumb.
-				break;
 			}
 		}
 	}
 	
-	public static ShootStates getCurrState() {
+	public ShootStates getCurrState() {
 		return currState;
 	}
 
-	public static void setCurrState(ShootStates currState) {
-		Shooter.currState = currState;
+	public void setCurrState(ShootStates currState) {
+		this.currState = currState;
 	}
 
 	public void setEnabled(boolean enabled){
@@ -143,4 +149,7 @@ public class Shooter {
 		SPIN_DOWN;
 	}
 	
+	public double convertAngleToPotValues(double desiredAngle){
+		return desiredAngle * 1;//TODO: pot range / angle range
+	}
 }

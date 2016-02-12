@@ -4,12 +4,18 @@ package org.usfirst.frc.team871.robot;
 import org.usfirst.frc.team871.robot.Logitech.AxisType;
 import org.usfirst.frc.team871.robot.Logitech.ButtonType;
 import org.usfirst.frc.team871.robot.Shooter.ShootStates;
+import org.usfirst.frc.team871.robot.XBoxController.Buttons;
 
+import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Talon;
+import edu.wpi.first.wpilibj.interfaces.Potentiometer;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -26,19 +32,29 @@ public class Robot extends IterativeRobot {
     String autoSelected;
     SendableChooser chooser;
 	
-    private Drive tankDrive;
+    public final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
     
-    public static Logitech stickJoy, stickJoy2;
+    Drive tankDrive;
+    Shooter shoot;
+    Lifter lift;
     
-    private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos1, beaterBarPos2, beaterBarRoller, winch, driveL, driveR;
+    Logitech stickJoy;
+	Logitech stickJoy2;
+	
+	XBoxController xbox;
     
-    private Shooter shoot;
+    SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, 
+    				winch, driveL, driveR, telescopeMotor;
     
-    private DigitalInput loadSense, armUpSense, armDownSense, grabSense;
+    DigitalInput loadedSense, telescopeUpperLimtSense, telescopeLowerLimitSense, 
+    			 grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense;
     
-    private Solenoid firePiston, liftPiston;
+    DoubleSolenoid firePiston, liftPiston, lockSolenoid;
+    Encoder liftEncoder, telescopeEncoder;
+    Potentiometer shooterPot;
     
-    private Lifter lift;
+    
+    
     
     /**
      * This function is run when the robot is first started up and should be
@@ -50,32 +66,43 @@ public class Robot extends IterativeRobot {
         chooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", chooser);
         
-        stickJoy  = new Logitech(Vars.JOYSTICK_1_PORT);
-        stickJoy2 = new Logitech(Vars.JOYSTICK_2_PORT);
-        
-        winch           = new Talon(Vars.WINCH_PORT);
+        winch           = new Talon(Vars.WINCH_PORT);//TODO: this may not be implemented
+        telescopeMotor  = new Talon(Vars.TELESCOPE_PORT);
         driveL          = new Talon(Vars.DRIVE_LEFT_PORT);
         driveR          = new Talon(Vars.DRIVE_RIGHT_PORT);
 	    aimShooter      = new Talon(Vars.SHOOTER_AIM_PORT);
 	    fireMotor1      = new Talon(Vars.FIRE_MOTOR_1_PORT);
 	    fireMotor2      = new Talon(Vars.FIRE_MOTOR_2_PORT);
-	    beaterBarPos1   = new Talon(Vars.BEATER_BAR_POS_1_PORT);
-	    beaterBarPos2   = new Talon(Vars.BEATER_BAR_POS_2_PORT);
+	    beaterBarPos    = new Talon(Vars.BEATER_BAR_POS_PORT);
 	    beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
+	    
+	    //Sensors
+	    stickJoy  = new Logitech(Vars.JOYSTICK_1_PORT);
+        stickJoy2 = new Logitech(Vars.JOYSTICK_2_PORT);
         
-        liftPiston = new Solenoid(Vars.LIFT_PISTON_PORT);
-        firePiston = new Solenoid(Vars.FIRE_PISTON_PORT);
+        xbox      = new XBoxController(Vars.XBOX_JOYSTICK_PORT);
         
-        grabSense  = new DigitalInput(Vars.GRAB_SENSE_PORT);
-        armUpSense = new DigitalInput(Vars.ARM_UP_SENSE_PORT);
-        armDownSense = new DigitalInput(Vars.ARM_DOWN_SENSE_PORT); //TODO: Get this on robot
-        loadSense  = new DigitalInput(Vars.LOADED_SENSE_PORT);
+        liftPiston   = new DoubleSolenoid(Vars.LIFT_PISTON_FORWARD_PORT, Vars.LIFT_PISTON_REVERSE_PORT);
+        firePiston   = new DoubleSolenoid(Vars.FIRE_PISTON_FORWARD_PORT, Vars.FIRE_PISTON_REVERSE_PORT);
+        lockSolenoid = new DoubleSolenoid(Vars.LOCK_SOLENOID_FORWARD_PORT, Vars.LOCK_SOLENOID_REVERSE_PORT);
+        
+        grabSense                = new DigitalInput(Vars.GRAB_SENSE_PORT);
+        telescopeUpperLimtSense  = new DigitalInput(Vars.TELESCOPE_UPPER_LIMIT_SENSE_PORT);
+        telescopeLowerLimitSense = new DigitalInput(Vars.TELESCOPE_LOWER_LIMIT_SENSE_PORT); //TODO: Get this on robot
+        loadedSense              = new DigitalInput(Vars.LOADED_SENSE_PORT);
+        armDeployedSense         = new DigitalInput(Vars.ARM_DEPLOYED_SENSE_PORT);
+        
+        
+        liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
+        telescopeEncoder = new Encoder(Vars.TELESCOPE_ENCODER_PORT_A, Vars.TELESCOPE_ENCODER_PORT_B);
+        
+        shooterPot = new AnalogPotentiometer(Vars.SHOOTER_POTENTIOMETER_PORT);
         
         tankDrive = new Drive(driveL, driveR);
         
-        lift = new Lifter(winch, liftPiston, grabSense, armUpSense);
-        
-        shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos1, beaterBarPos2, beaterBarRoller, firePiston);
+        //TODO armdeployed sense and lifter
+        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, telescopeLowerLimitSense, telescopeUpperLimtSense, xbox);
+        shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, loadedSense, beaterBarDeployed, beaterBarFolded);
     }
     
 	/**
@@ -88,9 +115,10 @@ public class Robot extends IterativeRobot {
 	 * If using the SendableChooser make sure to add them to the chooser code above as well.
 	 */
     public void autonomousInit() {
-    	autoSelected = (String) chooser.getSelected();
+    	autoSelected = customAuto;//(String) chooser.getSelected();
 //		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
+		
     }
 
     /**
@@ -99,7 +127,23 @@ public class Robot extends IterativeRobot {
     public void autonomousPeriodic() {
     	switch(autoSelected) {
     	case customAuto:
-        //Put custom auto code here   
+    		double tBefore = System.currentTimeMillis();
+    		double runTime = 0;
+    		
+    		if(runTime > 3000){
+    			tankDrive.driveBothMotors(0, 0);
+    			if(shoot.getCurrState() != ShootStates.AIM){
+    				shoot.setCurrState(ShootStates.AIM);
+    			}
+    			
+    		}else{
+    			tankDrive.driveBothMotors(1, 1);
+    		}
+    		
+    		shoot.update();
+    		
+    		runTime += System.currentTimeMillis() - tBefore;
+    		
             break;
     	case defaultAuto:
     	default:
@@ -112,21 +156,32 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
+    	dashboard.putString("shootState", shoot.getCurrState().name());
+    	dashboard.putString("lifterState", lift.getCurrState().name());
     	
-    	double axis = stickJoy.getDeadAxis(AxisType.Y);
+    	//Drive control
+    	double axis1 = stickJoy.getDeadAxis(AxisType.Y);
+    	double axis2 = stickJoy2.getDeadAxis(AxisType.Y);
     	
-    	tankDrive.driveBothMotors(axis, axis);
+    	tankDrive.driveBothMotors(axis1, axis2);
     	
+    	
+    	//user inputs
+    	if(xbox.toggleButton(Buttons.Y)){
+    		
+    		
+    		if(stickJoy.getRisingEdge(ButtonType.TWO)){
+        		shoot.setCurrState(ShootStates.MOVE_LOAD);
+        	}
+        	
+        	if(stickJoy.getRisingEdge(ButtonType.ONE) && !loadedSense.get()){ //TODO: Is it active low?
+        		shoot.setCurrState(ShootStates.AIM);
+        		tankDrive.autoAim();
+        	}
+    	}
+    	
+    	//state machines
     	lift.doAuto();
-    	
-    	if(stickJoy.getRisingEdge(ButtonType.TWO)){
-    		Shooter.setCurrState(ShootStates.MOVE_LOAD);
-    	}
-    	
-    	if(stickJoy.getRisingEdge(ButtonType.ONE) && !loadSense.get()){ //TODO: Is it active low?
-    		Shooter.setCurrState(ShootStates.AIM);
-    	}
-    	
     	shoot.update();
     }
     

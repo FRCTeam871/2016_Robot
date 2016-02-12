@@ -1,6 +1,8 @@
 package org.usfirst.frc.team871.robot;
 
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.networktables.NetworkTablesJNI;
 
 public class Drive {
 
@@ -8,6 +10,9 @@ public class Drive {
 	
 	public static final byte SIDE_L = 0;
 	public static final byte SIDE_R = 1;
+	public boolean enabled = true;
+
+	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
 	
 	public Drive(SpeedController driveL, SpeedController driveR){
 		this.driveL = driveL;
@@ -65,4 +70,20 @@ public class Drive {
 		return speed;
 	}
 	
+	public void autoAim(){
+		
+		if(enabled){
+			double centerOfMassX = dashboard.getNumber("centerOfMassX", 0.0);
+
+			if(centerOfMassX > 164){
+				driveBothMotors(-.5, .5);//TODO: direction
+			}else if(centerOfMassX < 136){
+				driveBothMotors(.5, -.5);//TODO: direction
+			}
+		}
+	}
+	
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
 }

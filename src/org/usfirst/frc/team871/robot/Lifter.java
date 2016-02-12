@@ -1,52 +1,57 @@
 package org.usfirst.frc.team871.robot;
 
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.SpeedController;
 
 public class Lifter {
 
 	SpeedController telescopingMotor, pullUpMotor; //TODO: Check if there's other motors (winch)
 	
-	Solenoid liftPiston, lockSolenoid;
+	DoubleSolenoid liftPiston, lockSolenoid;
 	
 	DigitalInput grabSense, armDeployedSense; //TODO: Check if we have these
 	DigitalInput telescopeUpperLimit, telescopeLowerLimit; //TODO: Check if we have these
 	
-	public LifterStates currState = LifterStates.TRANSPORT;
+	Encoder telescopeEncoder;
 	
+	XBoxController stickJoy;
+	
+	public LifterStates currState = LifterStates.TRANSPORT;
 	boolean autoEnabled = true;
 	
-	public Lifter(SpeedController telescopingMotor, Solenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, Solenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, DigitalInput armLowerLimit, DigitalInput armUpperLimit){
+	public Lifter(SpeedController telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, DigitalInput telescopeLowerLimit, DigitalInput telescopeUpperLimit, XBoxController stickJoy){
 		this.telescopingMotor = telescopingMotor;
 		this.liftPiston = raisor;
 		this.lockSolenoid = lockSolenoid;
 		this.grabSense = grabSense;
 		this.armDeployedSense = armUpSense;
-		this.pullUpMotor = pullUpMotor;
-		this.telescopeLowerLimit = armLowerLimit;
-		this.telescopeUpperLimit = armUpperLimit;
+		//this.pullUpMotor = pullUpMotor; TODO: this motor may or may not be implemented
+		this.telescopeLowerLimit = telescopeLowerLimit;
+		this.telescopeUpperLimit = telescopeUpperLimit;
+		//this.telescopeEncoder = telescopeEncoder;
+		this.stickJoy = stickJoy;
 		
 	}
 	
-	@SuppressWarnings("unused")
 	public void update(){
 		switch(currState){
 		case DEPLOY_ARM:
-			if(Robot.stickJoy.getRisingEdge(Vars.LIFER_ABORT_CONTROL)){
+			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
 			
-			if(Robot.stickJoy.getRisingEdge(Vars.LIFER_ADVANCE_CONTROL) && armDeployedSense.get()){ //TODO: Check if it's active low
+			if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && armDeployedSense.get()){ //TODO: Check if it's active low
 				currState = LifterStates.EXTEND; 
 			}else{
-				liftPiston.set(true);
+				liftPiston.set(Value.kForward);
 			}
 			break;
 			
 		case PULL_UP:
-			if(Robot.stickJoy.getRisingEdge(Vars.LIFER_ABORT_CONTROL)){
+			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
 			
@@ -66,11 +71,11 @@ public class Lifter {
 			break;
 			
 		case LOCKED:
-			lockSolenoid.set(true);
+			lockSolenoid.set(Value.kForward);
 			break;
 			
 		case EXTEND:
-			if(Robot.stickJoy.getRisingEdge(Vars.LIFER_ABORT_CONTROL)){
+			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
 			
@@ -82,7 +87,7 @@ public class Lifter {
 					telescopingMotor.set(0);
 					//pullUpMotor.set(0); //TODO: Check
 					
-					if(Robot.stickJoy.getRisingEdge(Vars.LIFER_ADVANCE_CONTROL) && !grabSense.get()){ //TODO: Check if it's active low
+					if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
 						currState = LifterStates.PULL_UP;
 					}
 				}
@@ -95,14 +100,14 @@ public class Lifter {
 			if(armDeployedSense.get() || !telescopeLowerLimit.get()){ //TODO: Check if it's active low
 				if(!telescopeLowerLimit.get()){ //TODO: Check if it's active low
 					telescopingMotor.set(-1);
-					//pullUpMotor.set(1); //TODO: Comment this out before booting. (Check Directions) <- VERY IMPORTANT*******************************
+					//pullUpMotor.set(1); //TODO: 
 				}
 				else{
-					liftPiston.set(false);
+					liftPiston.set(Value.kReverse);
 				}
 			}
 			else{
-				if(Robot.stickJoy.getRisingEdge(Vars.LIFER_ADVANCE_CONTROL)){
+				if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){
 					currState = LifterStates.DEPLOY_ARM;
 				}
 			}
@@ -146,7 +151,12 @@ public class Lifter {
 	public void reset(){
 		currState = LifterStates.TRANSPORT;
 	}
-	
+	public LifterStates getCurrState(){
+		return currState;
+	}
+	public void setCurrState(LifterStates currState){
+		this.currState = currState;
+	}
 	public enum LifterStates{
 		TRANSPORT,
 		DEPLOY_ARM,
