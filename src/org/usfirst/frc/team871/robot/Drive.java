@@ -70,13 +70,13 @@ public class Drive {
 	}
 	
 	public void autoAim(){
-		double centerOfMassX = dashboard.getNumber("centerOfMassX", 0.0);
-
-		if(centerOfMassX > Vars.TARGET_CENTER_OF_MASS_X_UPPER_BOUND){
-			driveBothMotors(-.5, .5);//TODO: direction
-		}else if(centerOfMassX < Vars.TARGET_CENTER_OF_MASS_X_LOWER_BOUND){
-			driveBothMotors(.5, -.5);//TODO: direction
-		}
+//		double centerOfMassX = dashboard.getNumber("centerOfMassX", 0.0);
+//
+//		if(centerOfMassX > Vars.TARGET_CENTER_OF_MASS_X_UPPER_BOUND){
+//			driveBothMotors(-.1, .1);//TODO: direction
+//		}else if(centerOfMassX < Vars.TARGET_CENTER_OF_MASS_X_LOWER_BOUND){
+//			driveBothMotors(.1, -.1);//TODO: direction
+//		}
 	}
 	
 }

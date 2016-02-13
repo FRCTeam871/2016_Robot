@@ -48,10 +48,8 @@ public class Vars {
 	public static final byte TELESCOPE_LOWER_LIMIT_SENSE_PORT      = 4;  		//TODO
 	public static final byte LOADED_SENSE_PORT                     = 5;  		//TODO
 	public static final byte ARM_DEPLOYED_SENSE_PORT			   = 2;       //lift hook upper limit
-	public static final byte SHOOTER_UPPER_LIMIT_PORT			   =   0;       //Thrower upper limit, active low
-	public static final byte SHOOTER_LOWER_LIMIT_PORT			   =   1;       //Thrower lower limit, active low
-	public static final byte BEATER_BAR_DEPLOYED_PORT              = 7;       //TODO
-	public static final byte BEATER_BAR_FOLDED_PORT				   = 8;       //TODO
+	public static final byte SHOOTER_UPPER_LIMIT_PORT			   = 0;       //Thrower upper limit, active low
+	public static final byte SHOOTER_LOWER_LIMIT_PORT			   = 1;       //Thrower lower limit, active low
 	
 	//Joysticks
 	public static final byte JOYSTICK_1_PORT        = 0;  //TODO
@@ -67,19 +65,30 @@ public class Vars {
 	public static final Axes SHOOTER_RAISE_AXIS_MANUAL    = Axes.rTRIGGER;
 	public static final Axes SHOOTER_LOWER_AXIS_MANUAL    = Axes.lTRIGGER;
 	public static final Axes BEATER_BAR_MANUAL_CONTROL    = Axes.LEFTy;
+	public static final Buttons BEATER_BAR_ROLLER_MANUAL_CONTROL_U    = Buttons.RB;
+	public static final Buttons BEATER_BAR_ROLLER_MANUAL_CONTROL_D    = Buttons.LB;
 	
 	//Encoder
-	public static final byte LIFT_ENCODER_PORT_A      =9;	//TODO
+	public static final byte LIFT_ENCODER_PORT_A      = 9;	//TODO
 	public static final byte LIFT_ENCODER_PORT_B      = 10;	//TODO
 	public static final byte TELESCOPE_ENCODER_PORT_A = 12;	//TODO
 	public static final byte TELESCOPE_ENCODER_PORT_B = 11;	//TODO
 	
 	//Potentiometer
-	public static final byte SHOOTER_POTENTIOMETER_PORT        =  0;  //thrower angle
-	public static final double SHOOTER_POT_TRANSPORT_POSITION  = DEFAULT_NUMBER; //TODO
+	public static final byte   SHOOTER_POTENTIOMETER_PORT     =  0; //thrower angle
+	public static final byte   TELESCOPE_POTENTIOMETER_PORT   =  -50; //telescope height
+	public static final byte   BEATER_BAR_POTENTIOMETER_PORT  =  1; //beater bar
+	public static final byte   SHOOTER_POT_TRANSPORT_POSITION =  0;
+	public static final double TELESCOPE_POTENTIOMETER_MAX    = DEFAULT_NUMBER; //TODO
+	public static final double TELESCOPE_POTENTIOMETER_MIN    = DEFAULT_NUMBER; //TODO
+	public static final double BEATER_BAR_POT_DEPLOYED_SETPOINT    = DEFAULT_NUMBER; //TODO
+	public static final double BEATER_BAR_POT_FOLDED_SETPOINT    = DEFAULT_NUMBER; //TODO
 	
 	//le category
-	public static final int TARGET_CENTER_OF_MASS_X_UPPER_BOUND = 164;
-	public static final int TARGET_CENTER_OF_MASS_X_LOWER_BOUND = 136;
+	public static final int TARGET_CENTER_OF_MASS_X_UPPER_BOUND = 163;
+	public static final int TARGET_CENTER_OF_MASS_X_LOWER_BOUND = 137;
+
+
+	
 	
 }

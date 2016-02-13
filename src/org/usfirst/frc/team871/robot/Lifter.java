@@ -1,43 +1,42 @@
 package org.usfirst.frc.team871.robot;
 
-import org.usfirst.frc.team871.robot.Logitech.AxisType;
 import org.usfirst.frc.team871.robot.XBoxController.Axes;
 
+import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SpeedController;
+import edu.wpi.first.wpilibj.interfaces.Potentiometer;
 
 public class Lifter {
 
-	SpeedController telescopingMotor, pullUpMotor; //TODO: Check if there's other motors (winch)
-	LimitedSpeedController beaterBarPos;
+	SpeedController pullUpMotor, beaterBarPos; //TODO: Check if there's other motors (winch)
+	CANTalon telescopingMotor;
 	DoubleSolenoid liftPiston, lockSolenoid;
-	
 	DigitalInput grabSense, armDeployedSense; //TODO: Check if we have these
-	
-	Encoder telescopeEncoder;
-	
+	Potentiometer telescopePotentiometer;
 	XBoxController xbox;
 	
 	public LifterStates currState = LifterStates.TRANSPORT;
 	boolean autoEnabled = true;
 	
-	public Lifter(SpeedController telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, XBoxController xbox, LimitedSpeedController beaterBarPos){
+	public Lifter(CANTalon telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Potentiometer telescopePotentiometer, SpeedController pullUpMotor, XBoxController xbox, SpeedController beaterBarPos){
 		this.telescopingMotor = telescopingMotor;
 		this.liftPiston = raisor;
 		this.lockSolenoid = lockSolenoid;
 		this.grabSense = grabSense;
 		this.armDeployedSense = armUpSense;
 		this.pullUpMotor = pullUpMotor;
-		this.telescopeEncoder = telescopeEncoder;
+		this.telescopePotentiometer = telescopePotentiometer;
 		this.xbox = xbox;
 		this.beaterBarPos = beaterBarPos;
 		
 		if(this.armDeployedSense.get()){
 			setCurrState(LifterStates.STARTUP_RESET);
 		}
+		
 		
 	}
 	/**
@@ -72,8 +71,13 @@ public class Lifter {
 			if(xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
-			telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
-
+			
+			if(telescopePotentiometer.get() == Vars.TELESCOPE_POTENTIOMETER_MAX || telescopePotentiometer.get() == Vars.TELESCOPE_POTENTIOMETER_MIN){
+				telescopingMotor.set(0);
+			}else{
+				telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+			}
+			
 			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
 				currState = LifterStates.PULL_UP;
 			}
@@ -85,25 +89,23 @@ public class Lifter {
 				currState = LifterStates.TRANSPORT;
 			}
 			
-			if(armDeployedSense.get()){
-				pullUpMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+			pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+			telescopingMotor.set(xbox.getAxisDeadBand(Axes.LEFTy, 0.15));
 			
-				if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){
-					currState = LifterStates.LOCKED;
-				}
-				
-			}else{
-				currState = LifterStates.DEPLOY_ARM;
+			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){
+				currState = LifterStates.LOCKED;
 			}
+				
+			
 			break;
 			
 		case LOCKED:
-			lockSolenoid.set(Value.kForward);
+
 			break;
 			
 		case STARTUP_RESET:
 			telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
-			pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy, .15));//TODO direction
+			//pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy, .15));//TODO direction
 			
 			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){ //TODO: Check if it's active low
 				currState = LifterStates.TRANSPORT;

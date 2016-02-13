@@ -1,5 +1,6 @@
 package org.usfirst.frc.team871.robot;
 
+import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -22,16 +23,17 @@ public class Shooter {
 	private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller;
 	private DoubleSolenoid firePiston;
 	private Potentiometer shooterPot;
-	private DigitalInput loadedSense, beaterBarDeployed, beaterBarFolded, shooterUpperLimit, shooterLowerLimit;
-	private ShootStates currState = ShootStates.AWAIT_INPUT;
+	private DigitalInput loadedSense, shooterUpperLimit, shooterLowerLimit;
+	private ShootStates currState = ShootStates.MOVE_TRANSPORT;
 	private boolean enabled = true; //Enable entire state machine
 	private long fireTimer = 0;
 	private Drive tankDrive;
-	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
-	double desiredAngle;
-	double centerOfMassX;
-	PIDController pid;
-	boolean manualMode = true; //Override autoAim
+	private final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
+	private double desiredAngle;
+	private PIDController pidShooterAngle, pidBeaterBar;
+	public boolean manualMode = true; //Override autoAim
+	
+	private Potentiometer beaterBarPot;
 	
 	private static double SHOOTER_UPPER_ANGLE = 62.5;
 	private static double SHOOTER_LOWER_ANGLE = -16.5;
@@ -40,7 +42,7 @@ public class Shooter {
 	
 	private static double POT_TO_ANGLE_VALUE = Math.abs(SHOOTER_UPPER_ANGLE - SHOOTER_LOWER_ANGLE) / Math.abs(POT_UPPER_VALUE - POT_LOWER_VALUE);
 	
-	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, DigitalInput loadedSense, DigitalInput beaterBarDeployed, DigitalInput beaterBarFolded, Drive tankDrive, DigitalInput shooterUpperLimit, DigitalInput shooterLowerLimit){
+	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, Potentiometer beaterBarPot, DigitalInput loadedSense, Drive tankDrive, DigitalInput shooterUpperLimit, DigitalInput shooterLowerLimit){
 		this.aimShooter        = aimShooter;
 		this.fireMotor1        = fireMotor1;
 		this.fireMotor2        = fireMotor2;
@@ -49,14 +51,19 @@ public class Shooter {
 		this.firePiston        = firePiston;
 		this.shooterPot        = shooterPot;
 		this.loadedSense       = loadedSense;
-		this.beaterBarDeployed = beaterBarDeployed;
-		this.beaterBarFolded   = beaterBarFolded;
 		this.tankDrive         = tankDrive;
 		this.shooterUpperLimit = shooterUpperLimit;
 		this.shooterLowerLimit = shooterLowerLimit;
+		this.beaterBarPot      = beaterBarPot;
 		
-		pid = new PIDController(1, 0, 0, this.shooterPot, this.aimShooter);
-		pid.setPercentTolerance(1);
+		pidShooterAngle = new PIDController(-100, 0, 0, this.shooterPot, this.aimShooter);
+		pidShooterAngle.setPercentTolerance(1);
+		pidShooterAngle.enable();
+		
+		pidBeaterBar = new PIDController(.4, 0, 0, this.beaterBarPot, this.beaterBarPos);
+		pidBeaterBar.setPercentTolerance(1);
+		pidBeaterBar.enable();
+		
 		
 		fireTimer = System.nanoTime();
 		firePiston.set(Value.kForward);
@@ -67,8 +74,9 @@ public class Shooter {
 	 */
 	public void update(){
 		desiredAngle  = dashboard.getNumber("theta", 0.0);
-		dashboard.putNumber("potVals", convertPotValuesToAngle(shooterPot.get()));
-		
+		dashboard.putNumber("shooterAngle", convertPotValuesToAngle(shooterPot.get()));
+		dashboard.putNumber("beaterBarPos", beaterBarPot.get());
+		//pid.setSetpoint(convertAngleToPotValues(desiredAngle));
 		if(enabled){
 			switch (currState) {
 			case AWAIT_INPUT: //Initial State
@@ -81,13 +89,13 @@ public class Shooter {
 				break;
 				
 			case AIM:
-				//dont autoaim if youre in manual mode
+				//don't autoaim if you're in manual mode
 				if(!manualMode){
 					tankDrive.autoAim();
-					pid.setSetpoint(convertAngleToPotValues(desiredAngle));
+					pidShooterAngle.setSetpoint(convertAngleToPotValues(desiredAngle));
 				}
 				
-				if(pid.onTarget() || manualMode){
+				if(Math.abs(pidShooterAngle.getError()) < .05 || manualMode){
 					fireTimer = System.nanoTime();
 					setCurrState(ShootStates.SPIN_UP);
 				}
@@ -124,21 +132,18 @@ public class Shooter {
 				break;
 				
 			case MOVE_LOAD:
-				if(!beaterBarDeployed.get()){ //TODO: direction
-					beaterBarPos.set(-.05);
-				}else{
-					beaterBarPos.set(0);
+				pidBeaterBar.setSetpoint(Vars.BEATER_BAR_POT_DEPLOYED_SETPOINT);
+				
+				if(Math.abs(pidBeaterBar.getError()) < .05){ //TODO: ERROR ALLOWED
 					setCurrState(ShootStates.LOAD_BOULDER);
 				}
 				break;
 				
 			case LOAD_BOULDER:
-				if(!loadedSense.get()){
 					beaterBarRoller.set(-.3); //TODO: What Direction?
-				}else{
-					beaterBarRoller.set(0);
-					setCurrState(ShootStates.MOVE_TRANSPORT);
-				}
+					fireMotor1.set(-.5);
+					fireMotor2.set(.5);
+				
 				break;
 				
 			case MOVE_TRANSPORT:
@@ -146,16 +151,16 @@ public class Shooter {
 				fireMotor1.set(0);
 				fireMotor2.set(0);
 				
+				pidBeaterBar.setSetpoint(Vars.BEATER_BAR_POT_DEPLOYED_SETPOINT);
+				
 				//fold down beater bar
-				if(!beaterBarFolded.get()){
-					beaterBarPos.set(.85);
-				}else{
-					beaterBarPos.set(0);
+				if(Math.abs(pidBeaterBar.getError()) < .05){
+					//beaterBarPos.set(.85);
 				}
 				
 				//move shooter into transport position
-				pid.setSetpoint(Vars.SHOOTER_POT_TRANSPORT_POSITION);
-				if(pid.onTarget()){
+				pidShooterAngle.setSetpoint(convertAngleToPotValues(Vars.SHOOTER_POT_TRANSPORT_POSITION));
+				if(Math.abs(pidShooterAngle.getError()) < .05){
 					setCurrState(ShootStates.AWAIT_INPUT);
 					fireTimer = System.nanoTime();
 				}
@@ -194,8 +199,8 @@ public class Shooter {
 	 * @return
 	 */
 	private double convertAngleToPotValues(double desiredAngle){
-		desiredAngle = SHOOTER_UPPER_ANGLE - (desiredAngle);
-		return (((desiredAngle - SHOOTER_LOWER_ANGLE) / POT_TO_ANGLE_VALUE) + POT_LOWER_VALUE);
+		//desiredAngle = SHOOTER_UPPER_ANGLE - (desiredAngle);
+		return POT_UPPER_VALUE - (((desiredAngle - SHOOTER_LOWER_ANGLE) / POT_TO_ANGLE_VALUE) + POT_LOWER_VALUE);
 
 	}
 	
@@ -211,6 +216,12 @@ public class Shooter {
 		}
 	}
 	
+	public void setBeaterBarRollSpeed(double speed){
+		if(manualMode){
+			beaterBarRoller.set(speed);
+		}
+	}
+	
 	public void setBeaterBarSpeed(double speed){
 		if(manualMode){
 			beaterBarPos.set(speed);
@@ -222,5 +233,11 @@ public class Shooter {
 	 */
 	public void setManualMode(boolean manualMode) {
 		this.manualMode = manualMode;
+		if(manualMode){
+			pidShooterAngle.disable();
+		}else{
+			pidShooterAngle.enable();
+		}
 	}
+	
 }

@@ -1,21 +1,19 @@
 
-//This code is copied directly from undertale.
 package org.usfirst.frc.team871.robot;
 
 import org.usfirst.frc.team871.robot.Logitech.AxisType;
-import org.usfirst.frc.team871.robot.Logitech.ButtonType;
 import org.usfirst.frc.team871.robot.Shooter.ShootStates;
-import org.usfirst.frc.team871.robot.XBoxController.Axes;
-import org.usfirst.frc.team871.robot.XBoxController.Buttons;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.CANTalon.FeedbackDevice;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.SerialPort;
+import edu.wpi.first.wpilibj.SerialPort.Port;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.interfaces.Potentiometer;
@@ -49,17 +47,19 @@ public class Robot extends IterativeRobot {
 	
 	XBoxController xbox;
 	
-	LimitedSpeedController aimShooter, beaterBarPos;
+	LimitedSpeedController aimShooter;
     
     SpeedController fireMotor1, fireMotor2, beaterBarRoller, 
-    				 driveL, driveR, winch, telescopeMotor;
+    				 driveL, driveR, winch, beaterBarPos;
     
-    DigitalInput loadedSense, grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense, 
-    			 shooterUpperLimit, shooterLowerLimit;
+    CANTalon telescopeMotor;
+    
+    DigitalInput loadedSense, grabSense, armDeployedSense, shooterUpperLimit, shooterLowerLimit;
     
     DoubleSolenoid firePiston, liftPiston, lockSolenoid;
     Encoder liftEncoder, telescopeEncoder;
-    Potentiometer shooterPot;
+    Potentiometer shooterPot, telescopePotentiometer, beaterBarPot;
+    SerialPort serial;
     
     /**
      * This function is run when the robot is first started up and should be
@@ -97,21 +97,23 @@ public class Robot extends IterativeRobot {
         armDeployedSense         = new DigitalInputActiveLow(Vars.ARM_DEPLOYED_SENSE_PORT);
         shooterUpperLimit        = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
         shooterLowerLimit        = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
-        beaterBarDeployed		 = new DigitalInputActiveLow(Vars.BEATER_BAR_DEPLOYED_PORT);
-        beaterBarFolded			 = new DigitalInputActiveLow(Vars.BEATER_BAR_FOLDED_PORT);
         
         aimShooter      = new LimitedSpeedController(shooterUpperLimit, shooterLowerLimit, new CANTalon(Vars.SHOOTER_AIM_PORT));
-        beaterBarPos    = new LimitedSpeedController(beaterBarDeployed, beaterBarFolded,   new Talon(Vars.BEATER_BAR_POS_PORT));
+        beaterBarPos    = new Talon(Vars.BEATER_BAR_POS_PORT);
         
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
         telescopeEncoder = new Encoder(Vars.TELESCOPE_ENCODER_PORT_A, Vars.TELESCOPE_ENCODER_PORT_B);
         
-        shooterPot = new AnalogPotentiometer(Vars.SHOOTER_POTENTIOMETER_PORT);
+        shooterPot   = new AnalogPotentiometer(Vars.SHOOTER_POTENTIOMETER_PORT);
+        beaterBarPot = new AnalogPotentiometer(Vars.BEATER_BAR_POTENTIOMETER_PORT);
         
         tankDrive = new Drive(driveL, driveR);
         
-        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, xbox, beaterBarPos);
-        shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, loadedSense, beaterBarDeployed, beaterBarFolded, tankDrive, shooterUpperLimit, shooterLowerLimit);
+        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopePotentiometer, winch, xbox, beaterBarPos);
+        shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, beaterBarPot, loadedSense, tankDrive, shooterUpperLimit, shooterLowerLimit);
+    
+        serial = new SerialPort(9600, Port.kMXP);
+        
     }
     
 	/**
@@ -173,6 +175,10 @@ public class Robot extends IterativeRobot {
     	double axis1 = stickJoy.getDeadAxis(AxisType.Y);
     	double axis2 = stickJoy2.getDeadAxis(AxisType.Y);
     	
+    	telescopeMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+
+    	
+    	
     	tankDrive.driveBothMotors(axis1, axis2);
     	
     	
@@ -185,7 +191,12 @@ public class Robot extends IterativeRobot {
     		shoot.setManualMode(false);
     		
     		if(stickJoy.getRisingEdge(Vars.LOAD_BUTTON)){
-        		shoot.setCurrState(ShootStates.MOVE_LOAD);
+    			if(shoot.getCurrState() == ShootStates.LOAD_BOULDER){
+            		shoot.setCurrState(ShootStates.MOVE_TRANSPORT);
+            	}else{
+            		shoot.setCurrState(ShootStates.MOVE_LOAD);
+            	}
+        		
         	}
         	
         	if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON) && loadedSense.get()){
@@ -206,13 +217,19 @@ public class Robot extends IterativeRobot {
         		shoot.setCurrState(ShootStates.AIM);
         	}
     		
+    	if(xbox.getRawButton(Vars.BEATER_BAR_ROLLER_MANUAL_CONTROL_U.getButtonNum())){
+    		shoot.setBeaterBarRollSpeed(.1);
+    	}else if(xbox.getRawButton(Vars.BEATER_BAR_ROLLER_MANUAL_CONTROL_D.getButtonNum())){
+    		shoot.setBeaterBarRollSpeed(-.1);
+    	}
     	
-    		
     	}
     	
     	//state machines
     	lift.doAuto();
     	shoot.update();
+    	
+    	serial.writeString(dashboard.getString("!0R255G0B", ""));
     }
     
     /**
