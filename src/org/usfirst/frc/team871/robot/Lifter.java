@@ -35,7 +35,9 @@ public class Lifter {
 		this.stickJoy = stickJoy;
 		
 	}
-	
+	/**
+	 * This method is called in doAuto() to update the state machine
+	 */
 	public void update(){
 		switch(currState){
 		case DEPLOY_ARM:
@@ -97,12 +99,15 @@ public class Lifter {
 			break;
 			
 		case TRANSPORT:
+			//if the lift is not in transport mode retract arm down and telescope down
 			if(armDeployedSense.get() || !telescopeLowerLimit.get()){ //TODO: Check if it's active low
+				//make sure that the telescope arms are down before folding the arm down
 				if(!telescopeLowerLimit.get()){ //TODO: Check if it's active low
 					telescopingMotor.set(-1);
 					//pullUpMotor.set(1); //TODO: 
 				}
 				else{
+					//fold down arm
 					liftPiston.set(Value.kReverse);
 				}
 			}
@@ -118,42 +123,33 @@ public class Lifter {
 			break;
 		}
 		
-		telescopingMotor.set(limitedSpeed(telescopingMotor, telescopeUpperLimit, telescopeLowerLimit));
-		pullUpMotor.set(limitedSpeed(pullUpMotor, telescopeUpperLimit, telescopeLowerLimit));
 	}
-	
+	/**
+	 * Call this method periodically to update the state machine
+	 */
 	public void doAuto(){ //Spam-Called when auto enabled
 		if(autoEnabled){
 			update();
 		}
 	}
-	
+	/**
+	 * Use this method to enable/disable the state machine
+	 * @param enabled
+	 */
 	public void setAutoEnabled(boolean enabled){
 		autoEnabled = enabled;
 	}
-	
-	public boolean getAutoEnabled(){
-		return autoEnabled;
-	}
-	
-	private double limitedSpeed(SpeedController motor, DigitalInput upperLimit, DigitalInput lowerLimit){
-		double speed = motor.get();
-		
-		if(upperLimit.get() && speed>0){ //TODO: Check if it's active low; Check Directions.
-			speed = 0;
-		}else if(lowerLimit.get() && speed<0){ //TODO: Check if it's active low; Check Directions.
-			speed = 0;
-		}
-		
-		return speed;
-	}
-	
-	public void reset(){
-		currState = LifterStates.TRANSPORT;
-	}
+	/**
+	 * returns the current state of the lifter
+	 * @return
+	 */
 	public LifterStates getCurrState(){
 		return currState;
 	}
+	/**
+	 * Use this to manually set the state of the lifter
+	 * @param currState
+	 */
 	public void setCurrState(LifterStates currState){
 		this.currState = currState;
 	}

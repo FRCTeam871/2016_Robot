@@ -50,7 +50,11 @@ public class XBoxController extends Joystick{
 			return buttonNum;
 		}
 	}
-	
+	/**
+	 * change value if the button state has just changed
+	 * @param buttonName
+	 * @return
+	 */
 	public boolean justChanged(Buttons buttonName){
 		int button = buttonName.getButtonNum();
 		
@@ -63,7 +67,11 @@ public class XBoxController extends Joystick{
 		
 		return justChanged;
 	}
-	
+	/**
+	 * returns true when the button is just pressed
+	 * @param buttonName
+	 * @return
+	 */
 	public boolean justPressed(Buttons buttonName){
 		int button = buttonName.getButtonNum();
 		
@@ -76,7 +84,11 @@ public class XBoxController extends Joystick{
 		
 		return justPressed;
 	}
-	
+	/**
+	 * Returns true when the button is just released
+	 * @param buttonName
+	 * @return
+	 */
 	public boolean justReleased(Buttons buttonName){
 		int button = buttonName.getButtonNum();
 		
@@ -89,7 +101,11 @@ public class XBoxController extends Joystick{
 		
 		return justReleased;
 	}
-	
+	/**
+	 * Toggles a value when the button is pressed
+	 * @param buttonName
+	 * @return
+	 */
 	public boolean isToggled(Buttons buttonName){
 		
 		int button = buttonName.getButtonNum();
@@ -103,11 +119,20 @@ public class XBoxController extends Joystick{
 		
 		return toggleState;
 	}
-	
+	/**
+	 * Returns the value of a given axis
+	 * @param axis
+	 * @return
+	 */
 	public double getAxisValue(Axes axis){
 		return getRawAxis(axis.getAxisNum());
 	}
-	
+	/**
+	 * Returns the deadbanded value of a given axis
+	 * @param axis
+	 * @param deadband
+	 * @return
+	 */
 	public double getAxisDeadBand(Axes axis, double deadband){
 		double x = getRawAxis(axis.getAxisNum());
 		double dead = deadband;

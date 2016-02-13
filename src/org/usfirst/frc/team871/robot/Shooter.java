@@ -8,8 +8,17 @@ import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.interfaces.Potentiometer;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
+/**
+ * Shooter class used to create a shooter
+ * @author Team871-5
+ *
+ *
+ * Things to do:
+ *	Organize state machine
+ *	
+ */
 public class Shooter {
-
+	
 	private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller;
 	private DoubleSolenoid firePiston;
 	private Potentiometer shooterPot;
@@ -39,19 +48,24 @@ public class Shooter {
 		this.shooterUpperLimit = shooterUpperLimit;
 		this.shooterLowerLimit = shooterLowerLimit;
 		
-		pid = new PIDController(1, 0, 0, shooterPot, aimShooter);
+		pid = new PIDController(1, 0, 0, this.shooterPot, this.aimShooter);
 		pid.setPercentTolerance(1);
 	}
 	
-	
+	/**
+	 * Call this method periodically to update the state machine.
+	 */
 	public void update(){
 		desiredAngle  = dashboard.getNumber("theta", 0.0);
 		
 		if(enabled){
 			switch (currState) {
 			case AIM:
-				tankDrive.autoAim();
-				pid.setSetpoint(convertAngleToPotValues(desiredAngle));
+				//dont autoaim if youre in manual mode
+				if(!manualMode){
+					tankDrive.autoAim();
+					pid.setSetpoint(convertAngleToPotValues(desiredAngle));
+				}
 				
 				if(pid.onTarget() || manualMode){
 					fireTimer = System.nanoTime();
@@ -68,8 +82,6 @@ public class Shooter {
 					firePiston.set(Value.kForward);
 				}else{
 					fireTimer = System.nanoTime();
-					fireMotor1.set(0);
-					fireMotor2.set(0);
 					firePiston.set(Value.kReverse);
 					setCurrState(ShootStates.SPIN_DOWN);
 				}
@@ -94,31 +106,34 @@ public class Shooter {
 				break;
 				
 			case MOVE_TRANSPORT:
+				//stop motors
 				fireMotor1.set(0);
 				fireMotor2.set(0);
 				
+				//fold down beater bar
 				if(!beaterBarFolded.get()){
 					beaterBarPos.set(-1);
 				}else{
 					beaterBarPos.set(0);
 				}
 				
-				if(Math.abs(shooterPot.get() - Vars.SHOOTER_POT_TRANSPORT_POSITION) > .1 ){ //TODO
-					aimShooter.set(-1);
-				}else{
-					aimShooter.set(0);
+				//move shooter into transport position
+				pid.setSetpoint(Vars.SHOOTER_POT_TRANSPORT_POSITION);
+				if(pid.onTarget()){
 					setCurrState(ShootStates.AWAIT_INPUT);
 				}
 				break;
 				
 			case SPIN_DOWN:
 				if(System.nanoTime() > fireTimer + Vars.SPIN_DOWN_TIME ){
+					//motors are stopped in MOVE_TRANSPORT
 					setCurrState(ShootStates.MOVE_TRANSPORT);
 				}else{
 					fireMotor1.set(-1);
 					fireMotor2.set(1); //TODO: Check directions/speed
 				}
 				break;
+				
 			case SPIN_UP:
 				if(System.nanoTime() > fireTimer + Vars.SPIN_UP_TIME ){
 					setCurrState(ShootStates.FIRE);
@@ -130,17 +145,19 @@ public class Shooter {
 			}
 		}
 	}
-	
+	/**
+	 * Returns the current State
+	 * @return
+	 */
 	public ShootStates getCurrState() {
 		return currState;
 	}
-
+	/**
+	 * Sets the current state
+	 * @param currState
+	 */
 	public void setCurrState(ShootStates currState) {
 		this.currState = currState;
-	}
-
-	public void setEnabled(boolean enabled){
-		this.enabled = enabled;
 	}
 	
 	public enum ShootStates{
@@ -153,35 +170,30 @@ public class Shooter {
 		FIRE,
 		SPIN_DOWN;
 	}
-	
-	public double convertAngleToPotValues(double desiredAngle){
+	/**
+	 * Converts an angle in degrees to a potentiometer value
+	 * @param desiredAngle
+	 * @return
+	 */
+	private double convertAngleToPotValues(double desiredAngle){
 		return desiredAngle * 1;//TODO: pot range / angle range
 	}
 	
-	public double setShooterSpeed(double speed){
-		double limitedSpeed;
-		if(shooterUpperLimit.get() && speed > 0){//TODO: direction
-			limitedSpeed = 0;
-		}else if(shooterLowerLimit.get() && speed < 0){
-			limitedSpeed = 0;
-		}else{
-			limitedSpeed = speed;
+	public void setShooterSpeed(double speed){
+		if(manualMode){
+			aimShooter.set(speed);
 		}
-		return limitedSpeed;
 	}
 	
-	public double setBeaterBarSpeed(double speed){
-		double limitedSpeed;
-		if(beaterBarDeployed.get() && speed > 0){//TODO: direction
-			limitedSpeed = 0;
-		}else if(beaterBarFolded.get() && speed < 0){
-			limitedSpeed = 0;
-		}else{
-			limitedSpeed = speed;
+	public void setBeaterBarSpeed(double speed){
+		if(manualMode){
+			beaterBarPos.set(speed);
 		}
-		return limitedSpeed;
 	}
-
+	/**
+	 * Used to put the state machine into manual mode
+	 * @param manualMode
+	 */
 	public void setManualMode(boolean manualMode) {
 		this.manualMode = manualMode;
 	}

@@ -53,8 +53,14 @@ public class Vars {
 	public static final int XBOX_JOYSTICK_PORT     = -50;		//TODO
 	
 	//Controls
-	public static final Buttons LIFTER_ADVANCE_BUTTON = Buttons.A; //TODO
-	public static final Buttons LIFTER_ABORT_BUTTON   = Buttons.X;  //TODO
+	public static final Buttons LIFTER_ADVANCE_BUTTON     = Buttons.A; //TODO
+	public static final Buttons LIFTER_ABORT_BUTTON       = Buttons.X;  //TODO
+	public static final Buttons MANUAL_MODE_TOGGLE_BUTTON = Buttons.Y;
+	public static final ButtonType LOAD_BUTTON			  = ButtonType.TWO;
+	public static final ButtonType FIRE_BUTTON			  = ButtonType.ONE;
+	public static final Axes SHOOTER_RAISE_AXIS_MANUAL    = Axes.rTRIGGER;
+	public static final Axes SHOOTER_LOWER_AXIS_MANUAL    = Axes.lTRIGGER;
+	public static final Axes BEATER_BAR_MANUAL_CONTROL    = Axes.LEFTy;
 	
 	//Encoder
 	public static final int LIFT_ENCODER_PORT_A      = -50;
@@ -65,5 +71,9 @@ public class Vars {
 	//Potentiometer
 	public static final int SHOOTER_POTENTIOMETER_PORT        = -50;
 	public static final double SHOOTER_POT_TRANSPORT_POSITION = -50;
+	
+	//le category
+	public static final int TARGET_CENTER_OF_MASS_X_UPPER_BOUND = 164;
+	public static final int TARGET_CENTER_OF_MASS_X_LOWER_BOUND = 136;
 	
 }

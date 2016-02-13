@@ -10,6 +10,7 @@ import org.usfirst.frc.team871.robot.XBoxController.Buttons;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.SpeedController;
@@ -42,9 +43,11 @@ public class Robot extends IterativeRobot {
 	Logitech stickJoy2;
 	
 	XBoxController xbox;
+	
+	LimitedSpeedController aimShooter, winch, telescopeMotor;
     
-    SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, 
-    				winch, driveL, driveR, telescopeMotor;
+    SpeedController fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, 
+    				 driveL, driveR;
     
     DigitalInput loadedSense, telescopeUpperLimtSense, telescopeLowerLimitSense, 
     			 grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense, 
@@ -64,15 +67,17 @@ public class Robot extends IterativeRobot {
         chooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", chooser);
         
-        winch           = new Talon(Vars.WINCH_PORT);//TODO: this may not be implemented
-        telescopeMotor  = new Talon(Vars.TELESCOPE_PORT);
+
         driveL          = new Talon(Vars.DRIVE_LEFT_PORT);
         driveR          = new Talon(Vars.DRIVE_RIGHT_PORT);
-	    aimShooter      = new Talon(Vars.SHOOTER_AIM_PORT);
 	    fireMotor1      = new Talon(Vars.FIRE_MOTOR_1_PORT);
 	    fireMotor2      = new Talon(Vars.FIRE_MOTOR_2_PORT);
 	    beaterBarPos    = new Talon(Vars.BEATER_BAR_POS_PORT);
 	    beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
+	    
+	    aimShooter      = new LimitedSpeedController(shooterUpperLimit, shooterLowerLimit, new Talon(Vars.SHOOTER_AIM_PORT));
+        winch           = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new Talon(Vars.WINCH_PORT));
+        telescopeMotor  = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new Talon(Vars.TELESCOPE_PORT));
 	    
 	    //Sensors
 	    stickJoy  = new Logitech(Vars.JOYSTICK_1_PORT);
@@ -165,28 +170,33 @@ public class Robot extends IterativeRobot {
     	tankDrive.driveBothMotors(axis1, axis2);
     	
     	
-    	//user inputs
-    	if(xbox.isToggled(Buttons.Y)){
+    	/*
+    	 * user inputs
+    	 * switch between automatic and manual modes
+    	 * automatic mode: shooter and beater bar are controlled by the state machine
+    	 */
+    	if(xbox.isToggled(Vars.MANUAL_MODE_TOGGLE_BUTTON)){
     		shoot.setManualMode(false);
     		
-    		if(stickJoy.getRisingEdge(ButtonType.TWO)){
+    		if(stickJoy.getRisingEdge(Vars.LOAD_BUTTON)){
         		shoot.setCurrState(ShootStates.MOVE_LOAD);
         	}
         	
-        	if(stickJoy.getRisingEdge(ButtonType.ONE) && loadedSense.get()){
+        	if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON) && loadedSense.get()){
         		shoot.setCurrState(ShootStates.AIM);
         	}
     	}else{
+    		//manual mode: shooter and beater bar are controlled by xbox controller
     		shoot.setManualMode(true);
     		shoot.setCurrState(ShootStates.AWAIT_INPUT);
     		
-    		double shooterSpeed = xbox.getAxisValue(Axes.rTRIGGER) - xbox.getAxisValue(Axes.lTRIGGER);
+    		double shooterSpeed = xbox.getAxisValue(Vars.SHOOTER_RAISE_AXIS_MANUAL) - xbox.getAxisValue(Vars.SHOOTER_LOWER_AXIS_MANUAL);
     		shoot.setShooterSpeed(shooterSpeed);
     		
-    		double beaterBarSpeed = xbox.getAxisValue(Axes.LEFTy);
+    		double beaterBarSpeed = xbox.getAxisValue(Vars.BEATER_BAR_MANUAL_CONTROL);
     		shoot.setBeaterBarSpeed(beaterBarSpeed);
     		
-    		if(stickJoy.getRisingEdge(ButtonType.ONE)){
+    		if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON)){
         		shoot.setCurrState(ShootStates.AIM);
         	}
     		

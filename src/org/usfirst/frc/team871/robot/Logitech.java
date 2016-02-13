@@ -7,7 +7,11 @@ public class Logitech extends Joystick{
 	public Logitech(int port) {
 		super(port);
 	}
-	
+	/**
+	 * Returns true when the button is just pressed
+	 * @param bt
+	 * @return
+	 */
 	public boolean getRisingEdge(ButtonType bt){
 		boolean press = false;
 		
@@ -18,18 +22,29 @@ public class Logitech extends Joystick{
 		 bt.wasPressed = getRawButton(bt.get());
 		 return press;
 	}
-	
+	/**
+	 * Returns the value of the toggled variable
+	 * @param bt
+	 * @return
+	 */
 	public boolean getToggledButton(ButtonType bt){
 		
 		return bt.toggled;
 	}
-	
+	/**
+	 * Toggles the value of the toggle variable
+	 * @param bt
+	 */
 	public void toggleButton(ButtonType bt){
 		if(getRisingEdge(bt)){
 			bt.toggled = !bt.toggled;
 		}
 	}
-	
+	/**
+	 * Returns the deadbanded value of the given Axis
+	 * @param at
+	 * @return
+	 */
 	public double getDeadAxis(AxisType at){
 		double x = getRawAxis(at.get());
 		double dead = at.getDeadBand();
