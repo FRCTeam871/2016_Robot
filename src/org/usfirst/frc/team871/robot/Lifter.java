@@ -28,10 +28,10 @@ public class Lifter {
 		this.lockSolenoid = lockSolenoid;
 		this.grabSense = grabSense;
 		this.armDeployedSense = armUpSense;
-		//this.pullUpMotor = pullUpMotor; TODO: this motor may or may not be implemented
+		this.pullUpMotor = pullUpMotor;
 		this.telescopeLowerLimit = telescopeLowerLimit;
 		this.telescopeUpperLimit = telescopeUpperLimit;
-		//this.telescopeEncoder = telescopeEncoder;
+		this.telescopeEncoder = telescopeEncoder;
 		this.stickJoy = stickJoy;
 		
 	}
@@ -40,71 +40,13 @@ public class Lifter {
 	 */
 	public void update(){
 		switch(currState){
-		case DEPLOY_ARM:
-			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
-				currState = LifterStates.TRANSPORT;
-			}
-			
-			if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && armDeployedSense.get()){ //TODO: Check if it's active low
-				currState = LifterStates.EXTEND; 
-			}else{
-				liftPiston.set(Value.kForward);
-			}
-			break;
-			
-		case PULL_UP:
-			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
-				currState = LifterStates.TRANSPORT;
-			}
-			
-			if(armDeployedSense.get()){ //TODO: Check if it's active low
-				if(!telescopeLowerLimit.get()){ //TODO: Check if it's active low
-					//pullUpMotor.set(-1); //TODO: Check
-					telescopingMotor.set(1);
-				}else{
-					//pullUpMotor.set(0); //TODO: Check
-					telescopingMotor.set(0);
-					
-					currState = LifterStates.LOCKED;
-				}
-			}else{
-				currState = LifterStates.DEPLOY_ARM;
-			}
-			break;
-			
-		case LOCKED:
-			lockSolenoid.set(Value.kForward);
-			break;
-			
-		case EXTEND:
-			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
-				currState = LifterStates.TRANSPORT;
-			}
-			
-			if(armDeployedSense.get()){ //TODO: Check if it's active low
-				if(!telescopeUpperLimit.get()){ //TODO: Check if it's active low
-					telescopingMotor.set(1);
-					//pullUpMotor.set(-1); //TODO: Check
-				}else{
-					telescopingMotor.set(0);
-					//pullUpMotor.set(0); //TODO: Check
-					
-					if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
-						currState = LifterStates.PULL_UP;
-					}
-				}
-			}else{
-				currState = LifterStates.DEPLOY_ARM;
-			}
-			break;
-			
 		case TRANSPORT:
 			//if the lift is not in transport mode retract arm down and telescope down
 			if(armDeployedSense.get() || !telescopeLowerLimit.get()){ //TODO: Check if it's active low
 				//make sure that the telescope arms are down before folding the arm down
 				if(!telescopeLowerLimit.get()){ //TODO: Check if it's active low
 					telescopingMotor.set(-1);
-					//pullUpMotor.set(1); //TODO: 
+					pullUpMotor.set(1); //TODO: 
 				}
 				else{
 					//fold down arm
@@ -118,9 +60,64 @@ public class Lifter {
 			}
 			break;
 			
-		default:
-			//Ur Dumb.
+		case DEPLOY_ARM:
+			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
+				currState = LifterStates.TRANSPORT;
+			}
+			
+			if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && armDeployedSense.get()){ //TODO: Check if it's active low
+				currState = LifterStates.EXTEND; 
+			}else{
+				liftPiston.set(Value.kForward);
+			}
 			break;
+			
+		case EXTEND:
+			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
+				currState = LifterStates.TRANSPORT;
+			}
+			
+			if(armDeployedSense.get()){ //TODO: Check if it's active low
+				if(!telescopeUpperLimit.get()){ //TODO: Check if it's active low
+					telescopingMotor.set(1);
+					pullUpMotor.set(-1); //TODO: Check
+				}else{
+					telescopingMotor.set(0);
+					pullUpMotor.set(0); //TODO: Check
+					
+					if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
+						currState = LifterStates.PULL_UP;
+					}
+				}
+			}else{
+				currState = LifterStates.DEPLOY_ARM;
+			}
+			break;
+			
+		case PULL_UP:
+			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
+				currState = LifterStates.TRANSPORT;
+			}
+			
+			if(armDeployedSense.get()){
+				if(!telescopeLowerLimit.get()){
+					pullUpMotor.set(-1); //TODO: Direction
+					telescopingMotor.set(1);
+				}else{
+					pullUpMotor.set(0);
+					telescopingMotor.set(0);
+					
+					currState = LifterStates.LOCKED;
+				}
+			}else{
+				currState = LifterStates.DEPLOY_ARM;
+			}
+			break;
+			
+		case LOCKED:
+			lockSolenoid.set(Value.kForward);
+			break;
+			
 		}
 		
 	}

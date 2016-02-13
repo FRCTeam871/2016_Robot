@@ -60,6 +60,10 @@ public class Shooter {
 		
 		if(enabled){
 			switch (currState) {
+			case AWAIT_INPUT: //Initial State
+				
+				break;
+				
 			case AIM:
 				//dont autoaim if youre in manual mode
 				if(!manualMode){
@@ -73,8 +77,13 @@ public class Shooter {
 				}
 				break;
 				
-			case AWAIT_INPUT: //Initial State
-				
+			case SPIN_UP:
+				if(System.nanoTime() > fireTimer + Vars.SPIN_UP_TIME ){
+					setCurrState(ShootStates.FIRE);
+				}else{
+					fireMotor1.set(1);
+					fireMotor2.set(-1); //TODO: Check directions
+				}
 				break;
 				
 			case FIRE:
@@ -84,43 +93,6 @@ public class Shooter {
 					fireTimer = System.nanoTime();
 					firePiston.set(Value.kReverse);
 					setCurrState(ShootStates.SPIN_DOWN);
-				}
-				break;
-				
-			case LOAD_BOULDER:
-				if(!loadedSense.get()){
-					beaterBarRoller.set(-1); //TODO: What Direction?
-				}else{
-					beaterBarRoller.set(0);
-					setCurrState(ShootStates.MOVE_TRANSPORT);
-				}
-				break;
-				
-			case MOVE_LOAD:
-				if(!beaterBarDeployed.get()){ //TODO: direction
-					beaterBarPos.set(-1);
-				}else{
-					beaterBarPos.set(0);
-					setCurrState(ShootStates.LOAD_BOULDER);
-				}
-				break;
-				
-			case MOVE_TRANSPORT:
-				//stop motors
-				fireMotor1.set(0);
-				fireMotor2.set(0);
-				
-				//fold down beater bar
-				if(!beaterBarFolded.get()){
-					beaterBarPos.set(-1);
-				}else{
-					beaterBarPos.set(0);
-				}
-				
-				//move shooter into transport position
-				pid.setSetpoint(Vars.SHOOTER_POT_TRANSPORT_POSITION);
-				if(pid.onTarget()){
-					setCurrState(ShootStates.AWAIT_INPUT);
 				}
 				break;
 				
@@ -134,12 +106,40 @@ public class Shooter {
 				}
 				break;
 				
-			case SPIN_UP:
-				if(System.nanoTime() > fireTimer + Vars.SPIN_UP_TIME ){
-					setCurrState(ShootStates.FIRE);
+			case MOVE_LOAD:
+				if(!beaterBarDeployed.get()){ //TODO: direction
+					beaterBarPos.set(-.05);
 				}else{
-					fireMotor1.set(1);
-					fireMotor2.set(-1); //TODO: Check directions
+					beaterBarPos.set(0);
+					setCurrState(ShootStates.LOAD_BOULDER);
+				}
+				break;
+				
+			case LOAD_BOULDER:
+				if(!loadedSense.get()){
+					beaterBarRoller.set(-.3); //TODO: What Direction?
+				}else{
+					beaterBarRoller.set(0);
+					setCurrState(ShootStates.MOVE_TRANSPORT);
+				}
+				break;
+				
+			case MOVE_TRANSPORT:
+				//stop motors
+				fireMotor1.set(0);
+				fireMotor2.set(0);
+				
+				//fold down beater bar
+				if(!beaterBarFolded.get()){
+					beaterBarPos.set(.85);
+				}else{
+					beaterBarPos.set(0);
+				}
+				
+				//move shooter into transport position
+				pid.setSetpoint(Vars.SHOOTER_POT_TRANSPORT_POSITION);
+				if(pid.onTarget()){
+					setCurrState(ShootStates.AWAIT_INPUT);
 				}
 				break;
 			}
