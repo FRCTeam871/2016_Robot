@@ -4,6 +4,7 @@ package org.usfirst.frc.team871.robot;
 import org.usfirst.frc.team871.robot.Logitech.AxisType;
 import org.usfirst.frc.team871.robot.Logitech.ButtonType;
 import org.usfirst.frc.team871.robot.Shooter.ShootStates;
+import org.usfirst.frc.team871.robot.XBoxController.Axes;
 import org.usfirst.frc.team871.robot.XBoxController.Buttons;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -11,7 +12,6 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.interfaces.Potentiometer;
@@ -47,14 +47,12 @@ public class Robot extends IterativeRobot {
     				winch, driveL, driveR, telescopeMotor;
     
     DigitalInput loadedSense, telescopeUpperLimtSense, telescopeLowerLimitSense, 
-    			 grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense;
+    			 grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense, 
+    			 shooterUpperLimit, shooterLowerLimit;
     
     DoubleSolenoid firePiston, liftPiston, lockSolenoid;
     Encoder liftEncoder, telescopeEncoder;
     Potentiometer shooterPot;
-    
-    
-    
     
     /**
      * This function is run when the robot is first started up and should be
@@ -91,6 +89,8 @@ public class Robot extends IterativeRobot {
         telescopeLowerLimitSense = new DigitalInput(Vars.TELESCOPE_LOWER_LIMIT_SENSE_PORT); //TODO: Get this on robot
         loadedSense              = new DigitalInput(Vars.LOADED_SENSE_PORT);
         armDeployedSense         = new DigitalInput(Vars.ARM_DEPLOYED_SENSE_PORT);
+        shooterUpperLimit        = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
+        shooterLowerLimit        = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
         
         
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
@@ -100,9 +100,8 @@ public class Robot extends IterativeRobot {
         
         tankDrive = new Drive(driveL, driveR);
         
-        //TODO armdeployed sense and lifter
         lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, telescopeLowerLimitSense, telescopeUpperLimtSense, xbox);
-        shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, loadedSense, beaterBarDeployed, beaterBarFolded);
+        shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, loadedSense, beaterBarDeployed, beaterBarFolded, tankDrive, shooterUpperLimit, shooterLowerLimit);
     }
     
 	/**
@@ -167,17 +166,32 @@ public class Robot extends IterativeRobot {
     	
     	
     	//user inputs
-    	if(xbox.toggleButton(Buttons.Y)){
-    		
+    	if(xbox.isToggled(Buttons.Y)){
+    		shoot.setManualMode(false);
     		
     		if(stickJoy.getRisingEdge(ButtonType.TWO)){
         		shoot.setCurrState(ShootStates.MOVE_LOAD);
         	}
         	
-        	if(stickJoy.getRisingEdge(ButtonType.ONE) && !loadedSense.get()){ //TODO: Is it active low?
+        	if(stickJoy.getRisingEdge(ButtonType.ONE) && loadedSense.get()){
         		shoot.setCurrState(ShootStates.AIM);
-        		tankDrive.autoAim();
         	}
+    	}else{
+    		shoot.setManualMode(true);
+    		shoot.setCurrState(ShootStates.AWAIT_INPUT);
+    		
+    		double shooterSpeed = xbox.getAxisValue(Axes.rTRIGGER) - xbox.getAxisValue(Axes.lTRIGGER);
+    		shoot.setShooterSpeed(shooterSpeed);
+    		
+    		double beaterBarSpeed = xbox.getAxisValue(Axes.LEFTy);
+    		shoot.setBeaterBarSpeed(beaterBarSpeed);
+    		
+    		if(stickJoy.getRisingEdge(ButtonType.ONE)){
+        		shoot.setCurrState(ShootStates.AIM);
+        	}
+    		
+    	
+    		
     	}
     	
     	//state machines

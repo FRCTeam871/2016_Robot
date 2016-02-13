@@ -44,6 +44,8 @@ public class Vars {
 	public static final int TELESCOPE_LOWER_LIMIT_SENSE_PORT      = -50;  		//TODO
 	public static final int LOADED_SENSE_PORT                     = -50;  		//TODO
 	public static final int ARM_DEPLOYED_SENSE_PORT				  = -50;
+	public static final int SHOOTER_UPPER_LIMIT_PORT			  = -50;
+	public static final int SHOOTER_LOWER_LIMIT_PORT			  = -50;
 	
 	//Joysticks
 	public static final int JOYSTICK_1_PORT        = -50;  		//TODO

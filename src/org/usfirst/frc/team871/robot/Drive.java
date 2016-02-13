@@ -71,19 +71,13 @@ public class Drive {
 	}
 	
 	public void autoAim(){
-		
-		if(enabled){
-			double centerOfMassX = dashboard.getNumber("centerOfMassX", 0.0);
+		double centerOfMassX = dashboard.getNumber("centerOfMassX", 0.0);
 
-			if(centerOfMassX > 164){
-				driveBothMotors(-.5, .5);//TODO: direction
-			}else if(centerOfMassX < 136){
-				driveBothMotors(.5, -.5);//TODO: direction
-			}
+		if(centerOfMassX > 164){
+			driveBothMotors(-.5, .5);//TODO: direction
+		}else if(centerOfMassX < 136){
+			driveBothMotors(.5, -.5);//TODO: direction
 		}
 	}
 	
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
 }

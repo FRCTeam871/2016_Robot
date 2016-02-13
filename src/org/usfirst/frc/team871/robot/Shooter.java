@@ -13,16 +13,18 @@ public class Shooter {
 	private SpeedController aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller;
 	private DoubleSolenoid firePiston;
 	private Potentiometer shooterPot;
-	private DigitalInput loadedSense, beaterBarDeployed, beaterBarFolded;
+	private DigitalInput loadedSense, beaterBarDeployed, beaterBarFolded, shooterUpperLimit, shooterLowerLimit;
 	private ShootStates currState = ShootStates.AWAIT_INPUT;
 	private boolean enabled = true;
 	private long fireTimer = 0;
+	private Drive tankDrive;
 	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
 	double desiredAngle;
 	double centerOfMassX;
 	PIDController pid;
+	boolean manualMode = false;
 	
-	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, DigitalInput loadedSense, DigitalInput beaterBarDeployed, DigitalInput beaterBarFolded){
+	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, DigitalInput loadedSense, DigitalInput beaterBarDeployed, DigitalInput beaterBarFolded, Drive tankDrive, DigitalInput shooterUpperLimit, DigitalInput shooterLowerLimit){
 		this.aimShooter        = aimShooter;
 		this.fireMotor1        = fireMotor1;
 		this.fireMotor2        = fireMotor2;
@@ -33,6 +35,9 @@ public class Shooter {
 		this.loadedSense       = loadedSense;
 		this.beaterBarDeployed = beaterBarDeployed;
 		this.beaterBarFolded   = beaterBarFolded;
+		this.tankDrive         = tankDrive;
+		this.shooterUpperLimit = shooterUpperLimit;
+		this.shooterLowerLimit = shooterLowerLimit;
 		
 		pid = new PIDController(1, 0, 0, shooterPot, aimShooter);
 		pid.setPercentTolerance(1);
@@ -45,10 +50,10 @@ public class Shooter {
 		if(enabled){
 			switch (currState) {
 			case AIM:
-				if(!pid.onTarget()){
-					pid.setSetpoint(convertAngleToPotValues(desiredAngle));
-					
-				}else{
+				tankDrive.autoAim();
+				pid.setSetpoint(convertAngleToPotValues(desiredAngle));
+				
+				if(pid.onTarget() || manualMode){
 					fireTimer = System.nanoTime();
 					setCurrState(ShootStates.SPIN_UP);
 				}
@@ -151,5 +156,33 @@ public class Shooter {
 	
 	public double convertAngleToPotValues(double desiredAngle){
 		return desiredAngle * 1;//TODO: pot range / angle range
+	}
+	
+	public double setShooterSpeed(double speed){
+		double limitedSpeed;
+		if(shooterUpperLimit.get() && speed > 0){//TODO: direction
+			limitedSpeed = 0;
+		}else if(shooterLowerLimit.get() && speed < 0){
+			limitedSpeed = 0;
+		}else{
+			limitedSpeed = speed;
+		}
+		return limitedSpeed;
+	}
+	
+	public double setBeaterBarSpeed(double speed){
+		double limitedSpeed;
+		if(beaterBarDeployed.get() && speed > 0){//TODO: direction
+			limitedSpeed = 0;
+		}else if(beaterBarFolded.get() && speed < 0){
+			limitedSpeed = 0;
+		}else{
+			limitedSpeed = speed;
+		}
+		return limitedSpeed;
+	}
+
+	public void setManualMode(boolean manualMode) {
+		this.manualMode = manualMode;
 	}
 }

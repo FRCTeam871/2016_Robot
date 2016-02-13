@@ -42,9 +42,9 @@ public class XBoxController extends Joystick{
 		private final int buttonNum;
 		boolean toggleValue;
 		
-		Buttons(int button, boolean toggle){
+		Buttons(int button, boolean toggleState){
 			this.buttonNum = button;
-			this.toggleValue = toggle;
+			this.toggleValue = toggleState;
 		}
 		public int getButtonNum(){
 			return buttonNum;
@@ -56,7 +56,7 @@ public class XBoxController extends Joystick{
 		
 		boolean justChanged = false;
 		
-		if (lastButtonValues[button] != getRawButton(button)){
+		if(lastButtonValues[button] != getRawButton(button)){
 			justChanged = true;
 		}
 		lastButtonValues[button] = getRawButton(button);
@@ -69,7 +69,7 @@ public class XBoxController extends Joystick{
 		
 		boolean justPressed = false;
 		
-		if ((lastButtonValues[button] != getRawButton(button)) && getRawButton(button) == true){
+		if((!lastButtonValues[button] && getRawButton(button))){
 			justPressed = true;
 		}
 		lastButtonValues[button] = getRawButton(button);//store values
@@ -82,7 +82,7 @@ public class XBoxController extends Joystick{
 		
 		boolean justReleased = false;
 		
-		if ((lastButtonValues[button] != getRawButton(button)) && getRawButton(button) == false){
+		if((lastButtonValues[button] && !getRawButton(button))){
 			justReleased = true;
 		}
 		lastButtonValues[button] = getRawButton(button);//store values
@@ -90,18 +90,18 @@ public class XBoxController extends Joystick{
 		return justReleased;
 	}
 	
-	public boolean toggleButton(Buttons buttonName){
+	public boolean isToggled(Buttons buttonName){
 		
 		int button = buttonName.getButtonNum();
 		
-		boolean toggle = buttonName.toggleValue;
+		boolean toggleState = buttonName.toggleValue;
 		
-		if ((lastButtonValues[button] != getRawButton(button)) && getRawButton(button) == false){
-			toggle = !toggle;
+		if(justPressed(buttonName)){
+			toggleState = !toggleState;
 		}
 		lastButtonValues[button] = getRawButton(button);//store values
 		
-		return toggle;
+		return toggleState;
 	}
 	
 	public double getAxisValue(Axes axis){
