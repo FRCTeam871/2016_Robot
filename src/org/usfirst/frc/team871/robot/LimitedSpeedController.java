@@ -90,5 +90,20 @@ public class LimitedSpeedController implements SpeedController{
 		}
 		return limitedSpeed;
 	}
+	
+	/**
+	 * Returns true if the beater bar is at the lower limit
+	 * @return
+	 */
+	public boolean isAtLowerLimit(){
+		return lowerLimit.get();
+	}
+	/**
+	 * Returns true if the beater bar is at the upper limit
+	 * @return
+	 */
+	public boolean isAtUpperLimit(){
+		return upperLimit.get();
+	}
 
 }

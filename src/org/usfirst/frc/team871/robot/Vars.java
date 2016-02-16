@@ -32,20 +32,22 @@ public class Vars {
 
 	//Solenoids
 	public static final int LIFT_PISTON_FORWARD_PORT       = -50;	//TODO
-	public static final int LIFT_PISTON_REVERSE_PORT       = -50;
-	public static final int FIRE_PISTON_FORWARD_PORT       = -50;
-	public static final int FIRE_PISTON_REVERSE_PORT       = -50;
-	public static final int LOCK_SOLENOID_FORWARD_PORT	   = -50;
-	public static final int LOCK_SOLENOID_REVERSE_PORT     = -50;
+	public static final int LIFT_PISTON_REVERSE_PORT       = -50;	//TODO
+	public static final int FIRE_PISTON_FORWARD_PORT       = -50;	//TODO
+	public static final int FIRE_PISTON_REVERSE_PORT       = -50;	//TODO
+	public static final int LOCK_SOLENOID_FORWARD_PORT	   = -50;	//TODO
+	public static final int LOCK_SOLENOID_REVERSE_PORT     = -50;	//TODO
 	
 	//DigitalInputs
 	public static final int GRAB_SENSE_PORT                       = -50;  		//TODO
 	public static final int TELESCOPE_UPPER_LIMIT_SENSE_PORT      = -50;  		//TODO
 	public static final int TELESCOPE_LOWER_LIMIT_SENSE_PORT      = -50;  		//TODO
 	public static final int LOADED_SENSE_PORT                     = -50;  		//TODO
-	public static final int ARM_DEPLOYED_SENSE_PORT				  = -50;
-	public static final int SHOOTER_UPPER_LIMIT_PORT			  = -50;
-	public static final int SHOOTER_LOWER_LIMIT_PORT			  = -50;
+	public static final int ARM_DEPLOYED_SENSE_PORT				  = -50;        //TODO
+	public static final int SHOOTER_UPPER_LIMIT_PORT			  = -50;        //TODO
+	public static final int SHOOTER_LOWER_LIMIT_PORT			  = -50;        //TODO
+	public static final int BEATER_BAR_DEPLOYED_PORT              = -50;
+	public static final int BEATER_BAR_FOLDED_PORT				  = -50;
 	
 	//Joysticks
 	public static final int JOYSTICK_1_PORT        = -50;  		//TODO
@@ -63,14 +65,14 @@ public class Vars {
 	public static final Axes BEATER_BAR_MANUAL_CONTROL    = Axes.LEFTy;
 	
 	//Encoder
-	public static final int LIFT_ENCODER_PORT_A      = -50;
-	public static final int LIFT_ENCODER_PORT_B      = -50;
-	public static final int TELESCOPE_ENCODER_PORT_A = -50;
-	public static final int TELESCOPE_ENCODER_PORT_B = -50;
+	public static final int LIFT_ENCODER_PORT_A      = -50;	//TODO
+	public static final int LIFT_ENCODER_PORT_B      = -50;	//TODO
+	public static final int TELESCOPE_ENCODER_PORT_A = -50;	//TODO
+	public static final int TELESCOPE_ENCODER_PORT_B = -50;	//TODO
 	
 	//Potentiometer
-	public static final int SHOOTER_POTENTIOMETER_PORT        = -50;
-	public static final double SHOOTER_POT_TRANSPORT_POSITION = -50;
+	public static final int SHOOTER_POTENTIOMETER_PORT        = -50;	//TODO
+	public static final double SHOOTER_POT_TRANSPORT_POSITION = -50;	//TODO
 	
 	//le category
 	public static final int TARGET_CENTER_OF_MASS_X_UPPER_BOUND = 164;

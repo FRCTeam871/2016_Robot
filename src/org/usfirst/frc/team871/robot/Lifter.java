@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.SpeedController;
 public class Lifter {
 
 	SpeedController telescopingMotor, pullUpMotor; //TODO: Check if there's other motors (winch)
-	
+	LimitedSpeedController beaterBarPos;
 	DoubleSolenoid liftPiston, lockSolenoid;
 	
 	DigitalInput grabSense, armDeployedSense; //TODO: Check if we have these
@@ -22,7 +22,7 @@ public class Lifter {
 	public LifterStates currState = LifterStates.TRANSPORT;
 	boolean autoEnabled = true;
 	
-	public Lifter(SpeedController telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, DigitalInput telescopeLowerLimit, DigitalInput telescopeUpperLimit, XBoxController stickJoy){
+	public Lifter(SpeedController telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, DigitalInput telescopeLowerLimit, DigitalInput telescopeUpperLimit, XBoxController stickJoy, LimitedSpeedController beaterBarPos){
 		this.telescopingMotor = telescopingMotor;
 		this.liftPiston = raisor;
 		this.lockSolenoid = lockSolenoid;
@@ -33,6 +33,7 @@ public class Lifter {
 		this.telescopeUpperLimit = telescopeUpperLimit;
 		this.telescopeEncoder = telescopeEncoder;
 		this.stickJoy = stickJoy;
+		this.beaterBarPos = beaterBarPos;
 		
 	}
 	/**
@@ -65,7 +66,9 @@ public class Lifter {
 				currState = LifterStates.TRANSPORT;
 			}
 			
-			if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && armDeployedSense.get()){ //TODO: Check if it's active low
+			beaterBarPos.set(-0.05);
+			
+			if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && !armDeployedSense.get() && beaterBarPos.isAtLowerLimit()){ //TODO: Check if it's active low
 				currState = LifterStates.EXTEND; 
 			}else{
 				liftPiston.set(Value.kForward);

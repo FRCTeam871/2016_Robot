@@ -44,9 +44,9 @@ public class Robot extends IterativeRobot {
 	
 	XBoxController xbox;
 	
-	LimitedSpeedController aimShooter, winch, telescopeMotor;
+	LimitedSpeedController aimShooter, winch, telescopeMotor, beaterBarPos;
     
-    SpeedController fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, 
+    SpeedController fireMotor1, fireMotor2, beaterBarRoller, 
     				 driveL, driveR;
     
     DigitalInput loadedSense, telescopeUpperLimtSense, telescopeLowerLimitSense, 
@@ -72,13 +72,13 @@ public class Robot extends IterativeRobot {
         driveR          = new Talon(Vars.DRIVE_RIGHT_PORT);
 	    fireMotor1      = new Talon(Vars.FIRE_MOTOR_1_PORT);
 	    fireMotor2      = new Talon(Vars.FIRE_MOTOR_2_PORT);
-	    beaterBarPos    = new Talon(Vars.BEATER_BAR_POS_PORT);
 	    beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
 	    
-	    aimShooter      = new LimitedSpeedController(shooterUpperLimit, shooterLowerLimit, new Talon(Vars.SHOOTER_AIM_PORT));
+	    aimShooter      = new LimitedSpeedController(shooterUpperLimit,       shooterLowerLimit,        new Talon(Vars.SHOOTER_AIM_PORT));
         winch           = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new Talon(Vars.WINCH_PORT));
         telescopeMotor  = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new Talon(Vars.TELESCOPE_PORT));
-	    
+        beaterBarPos    = new LimitedSpeedController(beaterBarDeployed,       beaterBarFolded,          new Talon(Vars.BEATER_BAR_POS_PORT));
+        
 	    //Sensors
 	    stickJoy  = new Logitech(Vars.JOYSTICK_1_PORT);
         stickJoy2 = new Logitech(Vars.JOYSTICK_2_PORT);
@@ -96,6 +96,8 @@ public class Robot extends IterativeRobot {
         armDeployedSense         = new DigitalInput(Vars.ARM_DEPLOYED_SENSE_PORT);
         shooterUpperLimit        = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
         shooterLowerLimit        = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
+        beaterBarDeployed		 = new DigitalInput(Vars.BEATER_BAR_DEPLOYED_PORT);
+        beaterBarFolded			 = new DigitalInput(Vars.BEATER_BAR_FOLDED_PORT);
         
         
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
@@ -105,7 +107,7 @@ public class Robot extends IterativeRobot {
         
         tankDrive = new Drive(driveL, driveR);
         
-        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, telescopeLowerLimitSense, telescopeUpperLimtSense, xbox);
+        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, telescopeLowerLimitSense, telescopeUpperLimtSense, xbox, beaterBarPos);
         shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, loadedSense, beaterBarDeployed, beaterBarFolded, tankDrive, shooterUpperLimit, shooterLowerLimit);
     }
     
