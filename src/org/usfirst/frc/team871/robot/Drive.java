@@ -2,7 +2,6 @@ package org.usfirst.frc.team871.robot;
 
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
-import edu.wpi.first.wpilibj.networktables.NetworkTablesJNI;
 
 public class Drive {
 
@@ -10,7 +9,7 @@ public class Drive {
 	
 	public static final byte SIDE_L = 0;
 	public static final byte SIDE_R = 1;
-	public boolean enabled = true;
+	public boolean enabled = false; //TODO: Check
 
 	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
 	

@@ -43,7 +43,7 @@ public class Lifter {
 		switch(currState){
 		case TRANSPORT:
 			//if the lift is not in transport mode retract arm down and telescope down
-			if(armDeployedSense.get() || !telescopeLowerLimit.get()){ //TODO: Check if it's active low
+			if(armDeployedSense.get()){ //TODO: Check if it's active low
 				//make sure that the telescope arms are down before folding the arm down
 				if(!telescopeLowerLimit.get()){ //TODO: Check if it's active low
 					telescopingMotor.set(-1);

@@ -12,7 +12,9 @@ public class LimitedSpeedController implements SpeedController{
 		this.motor = motor;
 		this.upperLimit = upperLimit;
 		this.lowerLimit = lowerLimit;
+		
 	}
+
 	/**
 	 * To be called in the PIDController
 	 * @param output

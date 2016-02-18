@@ -1,4 +1,5 @@
 
+//This code is copied directly from undertale.
 package org.usfirst.frc.team871.robot;
 
 import org.usfirst.frc.team871.robot.Logitech.AxisType;
@@ -8,6 +9,8 @@ import org.usfirst.frc.team871.robot.XBoxController.Axes;
 import org.usfirst.frc.team871.robot.XBoxController.Buttons;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
+import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -39,6 +42,8 @@ public class Robot extends IterativeRobot {
     Shooter shoot;
     Lifter lift;
     
+    Compressor airCompressor;
+    
     Logitech stickJoy;
 	Logitech stickJoy2;
 	
@@ -67,18 +72,15 @@ public class Robot extends IterativeRobot {
         chooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto choices", chooser);
         
-
-        driveL          = new Talon(Vars.DRIVE_LEFT_PORT);
-        driveR          = new Talon(Vars.DRIVE_RIGHT_PORT);
-	    fireMotor1      = new Talon(Vars.FIRE_MOTOR_1_PORT);
-	    fireMotor2      = new Talon(Vars.FIRE_MOTOR_2_PORT);
+        airCompressor   = new Compressor();  
+        driveL          = new CANTalon(Vars.DRIVE_LEFT_PORT);
+        driveL.setInverted(true);
+        driveR          = new CANTalon(Vars.DRIVE_RIGHT_PORT);
+	    fireMotor1      = new CANTalon(Vars.FIRE_MOTOR_1_PORT);
+	    fireMotor2      = new CANTalon(Vars.FIRE_MOTOR_2_PORT);
 	    beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
 	    
-	    aimShooter      = new LimitedSpeedController(shooterUpperLimit,       shooterLowerLimit,        new Talon(Vars.SHOOTER_AIM_PORT));
-        winch           = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new Talon(Vars.WINCH_PORT));
-        telescopeMotor  = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new Talon(Vars.TELESCOPE_PORT));
-        beaterBarPos    = new LimitedSpeedController(beaterBarDeployed,       beaterBarFolded,          new Talon(Vars.BEATER_BAR_POS_PORT));
-        
+	    
 	    //Sensors
 	    stickJoy  = new Logitech(Vars.JOYSTICK_1_PORT);
         stickJoy2 = new Logitech(Vars.JOYSTICK_2_PORT);
@@ -96,9 +98,13 @@ public class Robot extends IterativeRobot {
         armDeployedSense         = new DigitalInput(Vars.ARM_DEPLOYED_SENSE_PORT);
         shooterUpperLimit        = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
         shooterLowerLimit        = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
-        beaterBarDeployed		 = new DigitalInput(Vars.BEATER_BAR_DEPLOYED_PORT);
-        beaterBarFolded			 = new DigitalInput(Vars.BEATER_BAR_FOLDED_PORT);
+        beaterBarDeployed		 = new DigitalInputActiveHigh(Vars.BEATER_BAR_DEPLOYED_PORT);
+        beaterBarFolded			 = new DigitalInputActiveHigh(Vars.BEATER_BAR_FOLDED_PORT);
         
+        aimShooter      = new LimitedSpeedController(shooterUpperLimit,       shooterLowerLimit,        new CANTalon(Vars.SHOOTER_AIM_PORT));
+        winch           = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new CANTalon(Vars.WINCH_PORT));
+        telescopeMotor  = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new CANTalon(Vars.TELESCOPE_PORT));
+        beaterBarPos    = new LimitedSpeedController(beaterBarDeployed,       beaterBarFolded,          new Talon(Vars.BEATER_BAR_POS_PORT));
         
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
         telescopeEncoder = new Encoder(Vars.TELESCOPE_ENCODER_PORT_A, Vars.TELESCOPE_ENCODER_PORT_B);
@@ -164,7 +170,7 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
     	dashboard.putString("shootState", shoot.getCurrState().name());
     	dashboard.putString("lifterState", lift.getCurrState().name());
-    	
+    	airCompressor.start();
     	//Drive control
     	double axis1 = stickJoy.getDeadAxis(AxisType.Y);
     	double axis2 = stickJoy2.getDeadAxis(AxisType.Y);
@@ -190,13 +196,13 @@ public class Robot extends IterativeRobot {
     	}else{
     		//manual mode: shooter and beater bar are controlled by xbox controller
     		shoot.setManualMode(true);
-    		shoot.setCurrState(ShootStates.AWAIT_INPUT);
+    		
     		
     		double shooterSpeed = xbox.getAxisValue(Vars.SHOOTER_RAISE_AXIS_MANUAL) - xbox.getAxisValue(Vars.SHOOTER_LOWER_AXIS_MANUAL);
     		shoot.setShooterSpeed(shooterSpeed);
     		
     		double beaterBarSpeed = xbox.getAxisValue(Vars.BEATER_BAR_MANUAL_CONTROL);
-    		shoot.setBeaterBarSpeed(beaterBarSpeed);
+    		shoot.setBeaterBarSpeed(beaterBarSpeed * .5);
     		
     		if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON)){
         		shoot.setCurrState(ShootStates.AIM);
@@ -216,6 +222,10 @@ public class Robot extends IterativeRobot {
      */
     public void testPeriodic() {
     	
+    }
+    
+    public void disabledInit(){
+    	airCompressor.stop();
     }
     
 }

@@ -114,6 +114,7 @@ public class XBoxController extends Joystick{
 		
 		if(justPressed(buttonName)){
 			toggleState = !toggleState;
+			buttonName.toggleValue = toggleState;
 		}
 		lastButtonValues[button] = getRawButton(button);//store values
 		

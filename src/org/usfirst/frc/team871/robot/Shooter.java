@@ -24,14 +24,14 @@ public class Shooter {
 	private Potentiometer shooterPot;
 	private DigitalInput loadedSense, beaterBarDeployed, beaterBarFolded, shooterUpperLimit, shooterLowerLimit;
 	private ShootStates currState = ShootStates.AWAIT_INPUT;
-	private boolean enabled = true;
+	private boolean enabled = true; //Enable entire state machine
 	private long fireTimer = 0;
 	private Drive tankDrive;
 	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
 	double desiredAngle;
 	double centerOfMassX;
 	PIDController pid;
-	boolean manualMode = false;
+	boolean manualMode = true; //Override autoAim
 	
 	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, DigitalInput loadedSense, DigitalInput beaterBarDeployed, DigitalInput beaterBarFolded, Drive tankDrive, DigitalInput shooterUpperLimit, DigitalInput shooterLowerLimit){
 		this.aimShooter        = aimShooter;
@@ -79,6 +79,7 @@ public class Shooter {
 				
 			case SPIN_UP:
 				if(System.nanoTime() > fireTimer + Vars.SPIN_UP_TIME ){
+					fireTimer = System.nanoTime();
 					setCurrState(ShootStates.FIRE);
 				}else{
 					fireMotor1.set(1);
@@ -87,11 +88,11 @@ public class Shooter {
 				break;
 				
 			case FIRE:
-				if(loadedSense.get()){
-					firePiston.set(Value.kForward);
+				if(System.nanoTime() < fireTimer + Vars.SPIN_UP_TIME ){
+					firePiston.set(Value.kReverse);
 				}else{
 					fireTimer = System.nanoTime();
-					firePiston.set(Value.kReverse);
+					firePiston.set(Value.kForward);
 					setCurrState(ShootStates.SPIN_DOWN);
 				}
 				break;
