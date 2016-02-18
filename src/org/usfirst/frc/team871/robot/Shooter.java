@@ -33,6 +33,13 @@ public class Shooter {
 	PIDController pid;
 	boolean manualMode = true; //Override autoAim
 	
+	private static double SHOOTER_UPPER_ANGLE = 62.5;
+	private static double SHOOTER_LOWER_ANGLE = -16.5;
+	private static double POT_UPPER_VALUE     = .616104;
+	private static double POT_LOWER_VALUE     = .000994;
+	
+	private static double POT_TO_ANGLE_VALUE = Math.abs(SHOOTER_UPPER_ANGLE - SHOOTER_LOWER_ANGLE) / Math.abs(POT_UPPER_VALUE - POT_LOWER_VALUE);
+	
 	public Shooter(SpeedController aimShooter, SpeedController fireMotor1, SpeedController fireMotor2, SpeedController beaterBarPos, SpeedController beaterBarRoller, DoubleSolenoid firePiston, Potentiometer shooterPot, DigitalInput loadedSense, DigitalInput beaterBarDeployed, DigitalInput beaterBarFolded, Drive tankDrive, DigitalInput shooterUpperLimit, DigitalInput shooterLowerLimit){
 		this.aimShooter        = aimShooter;
 		this.fireMotor1        = fireMotor1;
@@ -50,6 +57,9 @@ public class Shooter {
 		
 		pid = new PIDController(1, 0, 0, this.shooterPot, this.aimShooter);
 		pid.setPercentTolerance(1);
+		
+		fireTimer = System.nanoTime();
+		firePiston.set(Value.kForward);
 	}
 	
 	/**
@@ -57,11 +67,17 @@ public class Shooter {
 	 */
 	public void update(){
 		desiredAngle  = dashboard.getNumber("theta", 0.0);
+		dashboard.putNumber("potVals", convertPotValuesToAngle(shooterPot.get()));
 		
 		if(enabled){
 			switch (currState) {
 			case AWAIT_INPUT: //Initial State
 				
+				if(System.nanoTime() > (fireTimer + 500000000)){
+					firePiston.set(Value.kOff);
+				}else{
+					firePiston.set(Value.kForward);
+				}
 				break;
 				
 			case AIM:
@@ -141,6 +157,7 @@ public class Shooter {
 				pid.setSetpoint(Vars.SHOOTER_POT_TRANSPORT_POSITION);
 				if(pid.onTarget()){
 					setCurrState(ShootStates.AWAIT_INPUT);
+					fireTimer = System.nanoTime();
 				}
 				break;
 			}
@@ -177,7 +194,15 @@ public class Shooter {
 	 * @return
 	 */
 	private double convertAngleToPotValues(double desiredAngle){
-		return desiredAngle * 1;//TODO: pot range / angle range
+		desiredAngle = SHOOTER_UPPER_ANGLE - (desiredAngle);
+		return (((desiredAngle - SHOOTER_LOWER_ANGLE) / POT_TO_ANGLE_VALUE) + POT_LOWER_VALUE);
+
+	}
+	
+	private double convertPotValuesToAngle(double potValues){
+		potValues = POT_UPPER_VALUE - (potValues);
+		
+		return (((potValues - POT_LOWER_VALUE) * POT_TO_ANGLE_VALUE) + SHOOTER_LOWER_ANGLE);
 	}
 	
 	public void setShooterSpeed(double speed){
