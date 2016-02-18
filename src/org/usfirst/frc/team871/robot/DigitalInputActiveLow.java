@@ -2,9 +2,9 @@ package org.usfirst.frc.team871.robot;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 
-public class DigitalInputActiveHigh extends DigitalInput{
+public class DigitalInputActiveLow extends DigitalInput{
 
-	public DigitalInputActiveHigh(int channel) {
+	public DigitalInputActiveLow(int channel) {
 		super(channel);
 		// TODO Auto-generated constructor stub
 	}

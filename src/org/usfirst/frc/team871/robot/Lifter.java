@@ -1,5 +1,8 @@
 package org.usfirst.frc.team871.robot;
 
+import org.usfirst.frc.team871.robot.Logitech.AxisType;
+import org.usfirst.frc.team871.robot.XBoxController.Axes;
+
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
@@ -13,27 +16,28 @@ public class Lifter {
 	DoubleSolenoid liftPiston, lockSolenoid;
 	
 	DigitalInput grabSense, armDeployedSense; //TODO: Check if we have these
-	DigitalInput telescopeUpperLimit, telescopeLowerLimit; //TODO: Check if we have these
 	
 	Encoder telescopeEncoder;
 	
-	XBoxController stickJoy;
+	XBoxController xbox;
 	
 	public LifterStates currState = LifterStates.TRANSPORT;
 	boolean autoEnabled = true;
 	
-	public Lifter(SpeedController telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, DigitalInput telescopeLowerLimit, DigitalInput telescopeUpperLimit, XBoxController stickJoy, LimitedSpeedController beaterBarPos){
+	public Lifter(SpeedController telescopingMotor, DoubleSolenoid raisor, DigitalInput grabSense, DigitalInput armUpSense, DoubleSolenoid lockSolenoid, Encoder telescopeEncoder, SpeedController pullUpMotor, XBoxController xbox, LimitedSpeedController beaterBarPos){
 		this.telescopingMotor = telescopingMotor;
 		this.liftPiston = raisor;
 		this.lockSolenoid = lockSolenoid;
 		this.grabSense = grabSense;
 		this.armDeployedSense = armUpSense;
 		this.pullUpMotor = pullUpMotor;
-		this.telescopeLowerLimit = telescopeLowerLimit;
-		this.telescopeUpperLimit = telescopeUpperLimit;
 		this.telescopeEncoder = telescopeEncoder;
-		this.stickJoy = stickJoy;
+		this.xbox = xbox;
 		this.beaterBarPos = beaterBarPos;
+		
+		if(this.armDeployedSense.get()){
+			setCurrState(LifterStates.STARTUP_RESET);
+		}
 		
 	}
 	/**
@@ -42,33 +46,22 @@ public class Lifter {
 	public void update(){
 		switch(currState){
 		case TRANSPORT:
-			//if the lift is not in transport mode retract arm down and telescope down
-			if(armDeployedSense.get()){ //TODO: Check if it's active low
-				//make sure that the telescope arms are down before folding the arm down
-				if(!telescopeLowerLimit.get()){ //TODO: Check if it's active low
-					telescopingMotor.set(-1);
-					pullUpMotor.set(1); //TODO: 
-				}
-				else{
-					//fold down arm
-					liftPiston.set(Value.kReverse);
-				}
+			liftPiston.set(Value.kReverse);
+			
+			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){
+				currState = LifterStates.DEPLOY_ARM;
 			}
-			else{
-				if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){
-					currState = LifterStates.DEPLOY_ARM;
-				}
-			}
+			
 			break;
 			
 		case DEPLOY_ARM:
-			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
+			if(xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
 			
-			beaterBarPos.set(-0.05);
+			//beaterBarPos.set(-0.05);
 			
-			if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && !armDeployedSense.get() && beaterBarPos.isAtLowerLimit()){ //TODO: Check if it's active low
+			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && armDeployedSense.get()){ //TODO: Check if it's active low
 				currState = LifterStates.EXTEND; 
 			}else{
 				liftPiston.set(Value.kForward);
@@ -76,42 +69,29 @@ public class Lifter {
 			break;
 			
 		case EXTEND:
-			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
+			if(xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
-			
-			if(armDeployedSense.get()){ //TODO: Check if it's active low
-				if(!telescopeUpperLimit.get()){ //TODO: Check if it's active low
-					telescopingMotor.set(1);
-					pullUpMotor.set(-1); //TODO: Check
-				}else{
-					telescopingMotor.set(0);
-					pullUpMotor.set(0); //TODO: Check
-					
-					if(stickJoy.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
-						currState = LifterStates.PULL_UP;
-					}
-				}
-			}else{
-				currState = LifterStates.DEPLOY_ARM;
+			telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+
+			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
+				currState = LifterStates.PULL_UP;
 			}
+			
 			break;
 			
 		case PULL_UP:
-			if(stickJoy.justPressed(Vars.LIFTER_ABORT_BUTTON)){
+			if(xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
 			
 			if(armDeployedSense.get()){
-				if(!telescopeLowerLimit.get()){
-					pullUpMotor.set(-1); //TODO: Direction
-					telescopingMotor.set(1);
-				}else{
-					pullUpMotor.set(0);
-					telescopingMotor.set(0);
-					
+				pullUpMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+			
+				if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){
 					currState = LifterStates.LOCKED;
 				}
+				
 			}else{
 				currState = LifterStates.DEPLOY_ARM;
 			}
@@ -121,6 +101,13 @@ public class Lifter {
 			lockSolenoid.set(Value.kForward);
 			break;
 			
+		case STARTUP_RESET:
+			telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+			pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy, .15));//TODO direction
+			
+			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)){ //TODO: Check if it's active low
+				currState = LifterStates.TRANSPORT;
+			}
 		}
 		
 	}
@@ -158,7 +145,8 @@ public class Lifter {
 		DEPLOY_ARM,
 		EXTEND,
 		PULL_UP,
-		LOCKED;
+		LOCKED,
+		STARTUP_RESET;
 	}
 	
 }

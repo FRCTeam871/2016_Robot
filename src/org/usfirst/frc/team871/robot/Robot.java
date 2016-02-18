@@ -49,13 +49,12 @@ public class Robot extends IterativeRobot {
 	
 	XBoxController xbox;
 	
-	LimitedSpeedController aimShooter, winch, telescopeMotor, beaterBarPos;
+	LimitedSpeedController aimShooter, beaterBarPos;
     
     SpeedController fireMotor1, fireMotor2, beaterBarRoller, 
-    				 driveL, driveR;
+    				 driveL, driveR, winch, telescopeMotor;
     
-    DigitalInput loadedSense, telescopeUpperLimtSense, telescopeLowerLimitSense, 
-    			 grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense, 
+    DigitalInput loadedSense, grabSense, beaterBarDeployed, beaterBarFolded, armDeployedSense, 
     			 shooterUpperLimit, shooterLowerLimit;
     
     DoubleSolenoid firePiston, liftPiston, lockSolenoid;
@@ -79,6 +78,8 @@ public class Robot extends IterativeRobot {
 	    fireMotor1      = new CANTalon(Vars.FIRE_MOTOR_1_PORT);
 	    fireMotor2      = new CANTalon(Vars.FIRE_MOTOR_2_PORT);
 	    beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
+	    winch           = new CANTalon(Vars.WINCH_PORT);
+        telescopeMotor  = new CANTalon(Vars.TELESCOPE_PORT);
 	    
 	    
 	    //Sensors
@@ -92,19 +93,15 @@ public class Robot extends IterativeRobot {
         lockSolenoid = new DoubleSolenoid(Vars.LOCK_SOLENOID_FORWARD_PORT, Vars.LOCK_SOLENOID_REVERSE_PORT);
         
         grabSense                = new DigitalInput(Vars.GRAB_SENSE_PORT);
-        telescopeUpperLimtSense  = new DigitalInput(Vars.TELESCOPE_UPPER_LIMIT_SENSE_PORT);
-        telescopeLowerLimitSense = new DigitalInput(Vars.TELESCOPE_LOWER_LIMIT_SENSE_PORT); //TODO: Get this on robot
         loadedSense              = new DigitalInput(Vars.LOADED_SENSE_PORT);
-        armDeployedSense         = new DigitalInput(Vars.ARM_DEPLOYED_SENSE_PORT);
+        armDeployedSense         = new DigitalInputActiveLow(Vars.ARM_DEPLOYED_SENSE_PORT);
         shooterUpperLimit        = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
         shooterLowerLimit        = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
-        beaterBarDeployed		 = new DigitalInputActiveHigh(Vars.BEATER_BAR_DEPLOYED_PORT);
-        beaterBarFolded			 = new DigitalInputActiveHigh(Vars.BEATER_BAR_FOLDED_PORT);
+        beaterBarDeployed		 = new DigitalInputActiveLow(Vars.BEATER_BAR_DEPLOYED_PORT);
+        beaterBarFolded			 = new DigitalInputActiveLow(Vars.BEATER_BAR_FOLDED_PORT);
         
-        aimShooter      = new LimitedSpeedController(shooterUpperLimit,       shooterLowerLimit,        new CANTalon(Vars.SHOOTER_AIM_PORT));
-        winch           = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new CANTalon(Vars.WINCH_PORT));
-        telescopeMotor  = new LimitedSpeedController(telescopeUpperLimtSense, telescopeLowerLimitSense, new CANTalon(Vars.TELESCOPE_PORT));
-        beaterBarPos    = new LimitedSpeedController(beaterBarDeployed,       beaterBarFolded,          new Talon(Vars.BEATER_BAR_POS_PORT));
+        aimShooter      = new LimitedSpeedController(shooterUpperLimit, shooterLowerLimit, new CANTalon(Vars.SHOOTER_AIM_PORT));
+        beaterBarPos    = new LimitedSpeedController(beaterBarDeployed, beaterBarFolded,   new Talon(Vars.BEATER_BAR_POS_PORT));
         
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
         telescopeEncoder = new Encoder(Vars.TELESCOPE_ENCODER_PORT_A, Vars.TELESCOPE_ENCODER_PORT_B);
@@ -113,7 +110,7 @@ public class Robot extends IterativeRobot {
         
         tankDrive = new Drive(driveL, driveR);
         
-        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, telescopeLowerLimitSense, telescopeUpperLimtSense, xbox, beaterBarPos);
+        lift  = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopeEncoder, winch, xbox, beaterBarPos);
         shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot, loadedSense, beaterBarDeployed, beaterBarFolded, tankDrive, shooterUpperLimit, shooterLowerLimit);
     }
     
@@ -170,6 +167,7 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
     	dashboard.putString("shootState", shoot.getCurrState().name());
     	dashboard.putString("lifterState", lift.getCurrState().name());
+    	dashboard.putBoolean("manualMode", shoot.manualMode);
     	airCompressor.start();
     	//Drive control
     	double axis1 = stickJoy.getDeadAxis(AxisType.Y);
