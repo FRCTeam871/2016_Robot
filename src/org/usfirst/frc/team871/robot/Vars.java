@@ -81,8 +81,8 @@ public class Vars {
 	public static final byte   SHOOTER_POT_TRANSPORT_POSITION =  0;
 	public static final double TELESCOPE_POTENTIOMETER_MAX    = DEFAULT_NUMBER; //TODO
 	public static final double TELESCOPE_POTENTIOMETER_MIN    = DEFAULT_NUMBER; //TODO
-	public static final double BEATER_BAR_POT_DEPLOYED_SETPOINT    = DEFAULT_NUMBER; //TODO
-	public static final double BEATER_BAR_POT_FOLDED_SETPOINT    = DEFAULT_NUMBER; //TODO
+	public static final double BEATER_BAR_POT_DEPLOYED_SETPOINT    = 0.46; 
+	public static final double BEATER_BAR_POT_FOLDED_SETPOINT    = 0.591; //TODO
 	
 	//le category
 	public static final int TARGET_CENTER_OF_MASS_X_UPPER_BOUND = 163;

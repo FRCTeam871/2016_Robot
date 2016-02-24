@@ -60,10 +60,11 @@ public class Shooter {
 		pidShooterAngle.setPercentTolerance(1);
 		pidShooterAngle.enable();
 		
-		pidBeaterBar = new PIDController(.4, 0, 0, this.beaterBarPot, this.beaterBarPos);
+		pidBeaterBar = new PIDController(50, 0, 0, this.beaterBarPot, this.beaterBarPos);
 		pidBeaterBar.setPercentTolerance(1);
+		pidBeaterBar.setInputRange(.444, .591);
 		pidBeaterBar.enable();
-		
+		pidBeaterBar.disable();
 		
 		fireTimer = System.nanoTime();
 		firePiston.set(Value.kForward);
@@ -76,6 +77,7 @@ public class Shooter {
 		desiredAngle  = dashboard.getNumber("theta", 0.0);
 		dashboard.putNumber("shooterAngle", convertPotValuesToAngle(shooterPot.get()));
 		dashboard.putNumber("beaterBarPos", beaterBarPot.get());
+		
 		//pid.setSetpoint(convertAngleToPotValues(desiredAngle));
 		if(enabled){
 			switch (currState) {
@@ -126,21 +128,22 @@ public class Shooter {
 					//motors are stopped in MOVE_TRANSPORT
 					setCurrState(ShootStates.MOVE_TRANSPORT);
 				}else{
-					fireMotor1.set(-1);
-					fireMotor2.set(1); //TODO: Check directions/speed
+//					fireMotor1.set(-1);
+//					fireMotor2.set(1); //TODO: Check directions/speed
 				}
 				break;
 				
 			case MOVE_LOAD:
-				pidBeaterBar.setSetpoint(Vars.BEATER_BAR_POT_DEPLOYED_SETPOINT);
+//				pidBeaterBar.setSetpoint(Vars.BEATER_BAR_POT_DEPLOYED_SETPOINT);
+//				pidShooterAngle.setSetpoint(convertAngleToPotValues(17));
 				
-				if(Math.abs(pidBeaterBar.getError()) < .05){ //TODO: ERROR ALLOWED
+				if(Math.abs(pidBeaterBar.getError()) < .0005){ //TODO: ERROR ALLOWED
 					setCurrState(ShootStates.LOAD_BOULDER);
 				}
 				break;
 				
 			case LOAD_BOULDER:
-					beaterBarRoller.set(-.3); //TODO: What Direction?
+					beaterBarRoller.set(.3); //TODO: What Direction?
 					fireMotor1.set(-.5);
 					fireMotor2.set(.5);
 				
@@ -148,8 +151,8 @@ public class Shooter {
 				
 			case MOVE_TRANSPORT:
 				//stop motors
-				fireMotor1.set(0);
-				fireMotor2.set(0);
+//				fireMotor1.set(0);
+//				fireMotor2.set(0);
 				
 				pidBeaterBar.setSetpoint(Vars.BEATER_BAR_POT_DEPLOYED_SETPOINT);
 				

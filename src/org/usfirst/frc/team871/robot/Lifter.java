@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.interfaces.Potentiometer;
+import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 public class Lifter {
 
@@ -18,6 +19,7 @@ public class Lifter {
 	DigitalInput grabSense, armDeployedSense; //TODO: Check if we have these
 	Potentiometer telescopePotentiometer;
 	XBoxController xbox;
+	final NetworkTable dashboard = NetworkTable.getTable("SmartDashboard");
 	
 	public LifterStates currState = LifterStates.TRANSPORT;
 	boolean autoEnabled = true;
@@ -43,6 +45,8 @@ public class Lifter {
 	 * This method is called in doAuto() to update the state machine
 	 */
 	public void update(){
+		dashboard.putNumber("telescopeEncoder", telescopingMotor.getPosition());
+		
 		switch(currState){
 		case TRANSPORT:
 			liftPiston.set(Value.kReverse);
@@ -71,13 +75,13 @@ public class Lifter {
 			if(xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)){
 				currState = LifterStates.TRANSPORT;
 			}
-			
-			if(telescopePotentiometer.get() == Vars.TELESCOPE_POTENTIOMETER_MAX || telescopePotentiometer.get() == Vars.TELESCOPE_POTENTIOMETER_MIN){
-				telescopingMotor.set(0);
-			}else{
-				telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
-			}
-			
+//			
+//			if(telescopePotentiometer.get() == Vars.TELESCOPE_POTENTIOMETER_MAX || telescopePotentiometer.get() == Vars.TELESCOPE_POTENTIOMETER_MIN){
+//				telescopingMotor.set(0);
+//			}else{
+//				telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+//			}
+//			
 			if(xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()){ //TODO: Check if it's active low
 				currState = LifterStates.PULL_UP;
 			}

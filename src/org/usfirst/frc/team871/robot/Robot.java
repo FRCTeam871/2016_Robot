@@ -2,6 +2,7 @@
 package org.usfirst.frc.team871.robot;
 
 import org.usfirst.frc.team871.robot.Logitech.AxisType;
+import org.usfirst.frc.team871.robot.Logitech.ButtonType;
 import org.usfirst.frc.team871.robot.Shooter.ShootStates;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
@@ -49,10 +50,10 @@ public class Robot extends IterativeRobot {
 	
 	LimitedSpeedController aimShooter;
     
-    SpeedController fireMotor1, fireMotor2, beaterBarRoller, 
+    SpeedController beaterBarRoller, 
     				 driveL, driveR, winch, beaterBarPos;
     
-    CANTalon telescopeMotor;
+    CANTalon telescopeMotor, fireMotor1, fireMotor2;
     
     DigitalInput loadedSense, grabSense, armDeployedSense, shooterUpperLimit, shooterLowerLimit;
     
@@ -114,6 +115,11 @@ public class Robot extends IterativeRobot {
     
         serial = new SerialPort(9600, Port.kMXP);
         
+        fireMotor1.enableBrakeMode(true);
+        fireMotor2.enableBrakeMode(true);
+        
+        
+       
     }
     
 	/**
@@ -190,7 +196,7 @@ public class Robot extends IterativeRobot {
     	if(xbox.isToggled(Vars.MANUAL_MODE_TOGGLE_BUTTON)){
     		shoot.setManualMode(false);
     		
-    		if(stickJoy.getRisingEdge(Vars.LOAD_BUTTON)){
+    		if(stickJoy.getRisingEdge(ButtonType.THREE)){
     			if(shoot.getCurrState() == ShootStates.LOAD_BOULDER){
             		shoot.setCurrState(ShootStates.MOVE_TRANSPORT);
             	}else{
@@ -199,7 +205,7 @@ public class Robot extends IterativeRobot {
         		
         	}
         	
-        	if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON) && loadedSense.get()){
+        	if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON)){
         		shoot.setCurrState(ShootStates.AIM);
         	}
     	}else{
@@ -211,25 +217,28 @@ public class Robot extends IterativeRobot {
     		shoot.setShooterSpeed(shooterSpeed);
     		
     		double beaterBarSpeed = xbox.getAxisValue(Vars.BEATER_BAR_MANUAL_CONTROL);
-    		shoot.setBeaterBarSpeed(beaterBarSpeed * .5);
+    		beaterBarPos.set(beaterBarSpeed);
     		
     		if(stickJoy.getRisingEdge(Vars.FIRE_BUTTON)){
         		shoot.setCurrState(ShootStates.AIM);
         	}
     		
-    	if(xbox.getRawButton(Vars.BEATER_BAR_ROLLER_MANUAL_CONTROL_U.getButtonNum())){
-    		shoot.setBeaterBarRollSpeed(.1);
-    	}else if(xbox.getRawButton(Vars.BEATER_BAR_ROLLER_MANUAL_CONTROL_D.getButtonNum())){
-    		shoot.setBeaterBarRollSpeed(-.1);
-    	}
+    		if(stickJoy2.getRawButton(ButtonType.ONE.get())){
+    			shoot.setBeaterBarRollSpeed(.3);
+    			fireMotor1.set(-.2);
+				fireMotor2.set(.2);
+    		}else{
+    			shoot.setBeaterBarRollSpeed(0);
+    			fireMotor1.set(0);
+				fireMotor2.set(0);
+    		}
     	
     	}
     	
     	//state machines
     	lift.doAuto();
     	shoot.update();
-    	
-    	serial.writeString(dashboard.getString("!0R255G0B", ""));
+    	serial.writeString("!000R255G000B");
     }
     
     /**
