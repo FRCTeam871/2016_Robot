@@ -1,71 +1,12 @@
 package org.usfirst.frc.team871.devices;
 
-import org.usfirst.frc.team871.robot.Vars;
-
-import edu.wpi.first.wpilibj.Joystick;
-
 /**
  * This class represents a Logitech joystick.
  * 
  * @author Team871
  *
  */
-public class Logitech extends Joystick {
-
-    public Logitech(int port) {
-        super(port);
-    }
-
-    /**
-     * Returns true when the button is just pressed
-     * 
-     * @param bt
-     *            The Button to check
-     * @return True if the button was just pressed
-     */
-    public boolean getRisingEdge(ButtonType bt) {
-        boolean press = false;
-
-        if (!bt.wasPressed && getRawButton(bt.get())) {
-            press = true;
-        }
-
-        bt.wasPressed = getRawButton(bt.get());
-        return press;
-    }
-
-    /**
-     * Returns the deadbanded value of the given Axis
-     * 
-     * @param at
-     * @return
-     */
-    public double getDeadAxis(AxisType at) {
-        double x = getRawAxis(at.get());
-        double dead = at.getDeadBand();
-
-        if (x < -dead) {
-            return (x / (1.0 - dead)) + (dead / (1 - dead));
-        }
-        else if (x > dead) {
-            return (x / (1.0 - dead)) - (dead / (1 - dead));
-        }
-        else {
-            return 0;
-        }
-
-    }
-
-    /**
-     * Get the pressed state of a button
-     * 
-     * @param button The button to check
-     * @return True if the button is pressed, false otherwise
-     */
-    public boolean getButton(ButtonType button) {
-        return getRawButton(button.get());
-    }
-
+public class Logitech extends EnhancedJoystick {
     public enum ButtonType {
         ONE(1), 
         TWO(2), 
@@ -77,12 +18,10 @@ public class Logitech extends Joystick {
         EIGHT(8), 
         NINE(9), 
         TEN(10), 
-        ELEVEN(11);
+        ELEVEN(11),
+        NUM_BUTTONS(12);
 
         final int tValue;
-
-        boolean   toggled    = false;
-        boolean   wasPressed = false;
 
         private ButtonType(int tType) {
             tValue = tType;
@@ -94,26 +33,85 @@ public class Logitech extends Joystick {
     }
 
     public enum AxisType {
-        X(0), Y(1), Z(2);
+        X(0), Y(1), Z(2), THROTTLE(3), NUM_AXES(4);
 
         final int tValue;
-        double    deadBand = Vars.DEFAULT_AXIS_DEADBAND;
 
         private AxisType(int tType) {
             tValue = tType;
-        }
-
-        public void setDeadBand(double deadBand) {
-            this.deadBand = deadBand;
-        }
-
-        public double getDeadBand() {
-            return deadBand;
         }
 
         public int get() {
             return tValue;
         }
     }
+    
+    public Logitech(int port) {
+        super(port,AxisType.NUM_AXES.get(), ButtonType.NUM_BUTTONS.get());
+    }
 
+    /**
+     * change value if the button state has just changed
+     * 
+     * @param buttonName
+     * @return
+     */
+    public boolean justChanged(ButtonType buttonName) {
+        return justChanged(buttonName.get());
+    }
+
+    /**
+     * returns true when the button is just pressed
+     * 
+     * @param buttonName
+     * @return
+     */
+    public boolean justPressed(ButtonType buttonName) {
+        return justPressed(buttonName.get());
+    }
+
+    /**
+     * Returns true when the button is just released
+     * 
+     * @param buttonName
+     * @return
+     */
+    public boolean justReleased(ButtonType buttonName) {
+        return justReleased(buttonName.get());
+    }
+
+    /**
+     * Toggles a value when the button is pressed
+     * 
+     * @param buttonName
+     * @return
+     */
+    public boolean isToggled(ButtonType buttonName) {
+        return getToggleState(buttonName.get());
+    }
+
+    public boolean getButton(ButtonType buttonName) {
+        return getRawButton(buttonName.get());
+    }
+    
+    /**
+     * Returns the value of a given axis
+     * 
+     * @param axis
+     * @return
+     */
+    public double getAxis(AxisType axis) {
+        return getRawAxis(axis.get());
+    }
+
+    /**
+     * Returns the deadbanded value of a given axis
+     * 
+     * @param axis
+     * @param deadband
+     * @return
+     */
+    public double getAxis(AxisType axis, double deadband) {
+        return getAxes(axis.get(), deadband);
+    }
 }

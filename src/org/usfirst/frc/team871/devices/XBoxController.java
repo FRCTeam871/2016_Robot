@@ -1,14 +1,6 @@
 package org.usfirst.frc.team871.devices;
 
-import edu.wpi.first.wpilibj.Joystick;
-
-public class XBoxController extends Joystick {
-
-    boolean[] lastButtonValues = new boolean[8];
-
-    public XBoxController(int port) {
-        super(port);
-    }
+public class XBoxController extends EnhancedJoystick {
 
     public enum Axes {
         LEFTx(0), 
@@ -16,7 +8,8 @@ public class XBoxController extends Joystick {
         lTRIGGER(2), 
         rTRIGGER(3), 
         RIGHTx(4), 
-        RIGHTy(5);
+        RIGHTy(5),
+        NUM_AXES(6);
 
         private final int axisNum;
 
@@ -30,26 +23,29 @@ public class XBoxController extends Joystick {
     }
 
     public enum Buttons {
-        A(1, false), 
-        B(2, false), 
-        X(3, false), 
-        Y(4, false), 
-        LB(5, false), 
-        RB(6, false), 
-        BACK(7, false), 
-        START(8, false);
+        A(1), 
+        B(2), 
+        X(3), 
+        Y(4), 
+        LB(5), 
+        RB(6), 
+        BACK(7), 
+        START(8),
+        NUM_BUTTONS(9);
 
         private final int buttonNum;
-        boolean           toggleValue;
 
-        Buttons(int button, boolean toggleState) {
+        Buttons(int button) {
             this.buttonNum = button;
-            this.toggleValue = toggleState;
         }
 
         public int getButtonNum() {
             return buttonNum;
         }
+    }
+    
+    public XBoxController(int port) {
+        super(port, Axes.NUM_AXES.getAxisNum(), Buttons.NUM_BUTTONS.getButtonNum());
     }
 
     /**
@@ -59,16 +55,7 @@ public class XBoxController extends Joystick {
      * @return
      */
     public boolean justChanged(Buttons buttonName) {
-        int button = buttonName.getButtonNum();
-
-        boolean justChanged = false;
-
-        if (lastButtonValues[button] != getRawButton(button)) {
-            justChanged = true;
-        }
-        lastButtonValues[button] = getRawButton(button);
-
-        return justChanged;
+        return justChanged(buttonName.getButtonNum());
     }
 
     /**
@@ -78,16 +65,7 @@ public class XBoxController extends Joystick {
      * @return
      */
     public boolean justPressed(Buttons buttonName) {
-        int button = buttonName.getButtonNum();
-
-        boolean justPressed = false;
-
-        if ((!lastButtonValues[button] && getRawButton(button))) {
-            justPressed = true;
-        }
-        lastButtonValues[button] = getRawButton(button);// store values
-
-        return justPressed;
+        return justPressed(buttonName.getButtonNum());
     }
 
     /**
@@ -97,16 +75,7 @@ public class XBoxController extends Joystick {
      * @return
      */
     public boolean justReleased(Buttons buttonName) {
-        int button = buttonName.getButtonNum();
-
-        boolean justReleased = false;
-
-        if ((lastButtonValues[button] && !getRawButton(button))) {
-            justReleased = true;
-        }
-        lastButtonValues[button] = getRawButton(button);// store values
-
-        return justReleased;
+        return justReleased(buttonName.getButtonNum());
     }
 
     /**
@@ -116,18 +85,7 @@ public class XBoxController extends Joystick {
      * @return
      */
     public boolean isToggled(Buttons buttonName) {
-
-        int button = buttonName.getButtonNum();
-
-        boolean toggleState = buttonName.toggleValue;
-
-        if (justPressed(buttonName)) {
-            toggleState = !toggleState;
-            buttonName.toggleValue = toggleState;
-        }
-        lastButtonValues[button] = getRawButton(button);// store values
-
-        return toggleState;
+        return getToggleState(buttonName.getButtonNum());
     }
 
     /**
@@ -136,7 +94,7 @@ public class XBoxController extends Joystick {
      * @param axis
      * @return
      */
-    public double getAxisValue(Axes axis) {
+    public double getAxes(Axes axis) {
         return getRawAxis(axis.getAxisNum());
     }
 
@@ -147,18 +105,7 @@ public class XBoxController extends Joystick {
      * @param deadband
      * @return
      */
-    public double getAxisDeadBand(Axes axis, double deadband) {
-        double x = getRawAxis(axis.getAxisNum());
-        double dead = deadband;
-
-        if (x < -dead) {
-            return (x / (1.0 - dead)) + (dead / (1 - dead));
-        }
-        else if (x > dead) {
-            return (x / (1.0 - dead)) - (dead / (1 - dead));
-        }
-        else {
-            return 0;
-        }
+    public double getAxes(Axes axis, double deadband) {
+        return getAxes(axis.getAxisNum(), deadband);
     }
 }

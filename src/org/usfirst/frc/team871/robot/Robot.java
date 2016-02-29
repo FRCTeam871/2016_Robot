@@ -183,8 +183,8 @@ public class Robot extends IterativeRobot {
         dashboard.putBoolean("manualMode", shoot.isManualControl());
 
         // Drive control
-        double leftAxis  = leftStick.getDeadAxis(AxisType.Y);
-        double rightAxis = rightStick.getDeadAxis(AxisType.Y);
+        double leftAxis  = leftStick.getAxis(AxisType.Y, Vars.DEFAULT_AXIS_DEADBAND);
+        double rightAxis = rightStick.getAxis(AxisType.Y, Vars.DEFAULT_AXIS_DEADBAND);
 
         telescopeMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 
@@ -197,7 +197,7 @@ public class Robot extends IterativeRobot {
         if (xbox.isToggled(Vars.MANUAL_MODE_TOGGLE_BUTTON)) {
             shoot.setManualMode(false);
 
-            if (leftStick.getRisingEdge(ButtonType.THREE)) {
+            if (leftStick.justPressed(ButtonType.THREE)) {
                 if (shoot.getCurrState() == ShootStates.LOAD_BOULDER) {
                     shoot.setCurrState(ShootStates.MOVE_TRANSPORT);
                 }
@@ -207,7 +207,7 @@ public class Robot extends IterativeRobot {
 
             }
 
-            if (leftStick.getRisingEdge(Vars.FIRE_BUTTON)) {
+            if (leftStick.justPressed(Vars.FIRE_BUTTON)) {
                 shoot.setCurrState(ShootStates.AIM);
             }
         }
@@ -217,14 +217,14 @@ public class Robot extends IterativeRobot {
             shoot.setManualMode(true);
 
             // Blend the two trigger axes to simulate a single ais
-            double shooterSpeed = xbox.getAxisValue(Vars.SHOOTER_RAISE_AXIS_MANUAL)
-                                  - xbox.getAxisValue(Vars.SHOOTER_LOWER_AXIS_MANUAL);
+            double shooterSpeed = xbox.getAxes(Vars.SHOOTER_RAISE_AXIS_MANUAL)
+                                  - xbox.getAxes(Vars.SHOOTER_LOWER_AXIS_MANUAL);
             shoot.setShooterSpeed(shooterSpeed);
 
-            double beaterBarSpeed = xbox.getAxisValue(Vars.BEATER_BAR_AXIS_MANUAL);
+            double beaterBarSpeed = xbox.getAxes(Vars.BEATER_BAR_AXIS_MANUAL);
             beaterBarPos.set(beaterBarSpeed);
 
-            if (leftStick.getRisingEdge(Vars.FIRE_BUTTON)) {
+            if (leftStick.justPressed(Vars.FIRE_BUTTON)) {
                 shoot.setCurrState(ShootStates.AIM);
             }
 

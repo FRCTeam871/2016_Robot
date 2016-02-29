@@ -100,8 +100,8 @@ public class Lifter {
                     currState = LifterStates.TRANSPORT;
                 }
 
-                pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy, .15));
-                telescopingMotor.set(xbox.getAxisDeadBand(Axes.LEFTy, 0.15));
+                pullUpMotor.set(-xbox.getAxes(Axes.RIGHTy, .15));
+                telescopingMotor.set(xbox.getAxes(Axes.LEFTy, 0.15));
 
                 if (xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)) {
                     currState = LifterStates.LOCKED;
@@ -114,7 +114,7 @@ public class Lifter {
                 break;
 
             case STARTUP_RESET:
-                telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
+                telescopingMotor.set(xbox.getAxes(Axes.RIGHTy, .15));
                 // pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy,
                 // .15));//TODO direction
 
