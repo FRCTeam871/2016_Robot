@@ -1,6 +1,8 @@
-package org.usfirst.frc.team871.robot;
+package org.usfirst.frc.team871.robot.subsystems;
 
-import org.usfirst.frc.team871.robot.XBoxController.Axes;
+import org.usfirst.frc.team871.devices.XBoxController;
+import org.usfirst.frc.team871.devices.XBoxController.Axes;
+import org.usfirst.frc.team871.robot.Vars;
 
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.DigitalInput;

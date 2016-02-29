@@ -1,9 +1,16 @@
 
 package org.usfirst.frc.team871.robot;
 
-import org.usfirst.frc.team871.robot.Logitech.AxisType;
-import org.usfirst.frc.team871.robot.Logitech.ButtonType;
-import org.usfirst.frc.team871.robot.Shooter.ShootStates;
+import org.usfirst.frc.team871.devices.DigitalInputActiveLow;
+import org.usfirst.frc.team871.devices.LimitedSpeedController;
+import org.usfirst.frc.team871.devices.Logitech;
+import org.usfirst.frc.team871.devices.XBoxController;
+import org.usfirst.frc.team871.devices.Logitech.AxisType;
+import org.usfirst.frc.team871.devices.Logitech.ButtonType;
+import org.usfirst.frc.team871.robot.subsystems.Drive;
+import org.usfirst.frc.team871.robot.subsystems.Lifter;
+import org.usfirst.frc.team871.robot.subsystems.Shooter;
+import org.usfirst.frc.team871.robot.subsystems.Shooter.ShootStates;
 
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.CANTalon;

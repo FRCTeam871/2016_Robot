@@ -1,4 +1,4 @@
-package org.usfirst.frc.team871.robot;
+package org.usfirst.frc.team871.devices;
 
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.SpeedController;

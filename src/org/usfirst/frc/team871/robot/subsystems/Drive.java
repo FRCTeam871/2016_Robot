@@ -1,4 +1,4 @@
-package org.usfirst.frc.team871.robot;
+package org.usfirst.frc.team871.robot.subsystems;
 
 import edu.wpi.first.wpilibj.SpeedController;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;

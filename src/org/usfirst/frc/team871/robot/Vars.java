@@ -1,8 +1,8 @@
 package org.usfirst.frc.team871.robot;
 
-import org.usfirst.frc.team871.robot.Logitech.ButtonType;
-import org.usfirst.frc.team871.robot.XBoxController.Axes;
-import org.usfirst.frc.team871.robot.XBoxController.Buttons;
+import org.usfirst.frc.team871.devices.Logitech.ButtonType;
+import org.usfirst.frc.team871.devices.XBoxController.Axes;
+import org.usfirst.frc.team871.devices.XBoxController.Buttons;
 
 public class Vars {
 

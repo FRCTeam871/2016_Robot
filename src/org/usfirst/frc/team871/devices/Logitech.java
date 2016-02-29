@@ -1,4 +1,6 @@
-package org.usfirst.frc.team871.robot;
+package org.usfirst.frc.team871.devices;
+
+import org.usfirst.frc.team871.robot.Vars;
 
 import edu.wpi.first.wpilibj.Joystick;
 
