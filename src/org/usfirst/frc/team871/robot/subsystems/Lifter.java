@@ -65,8 +65,6 @@ public class Lifter {
                     currState = LifterStates.TRANSPORT;
                 }
 
-                // beaterBarPos.set(-0.05);
-
                 if (xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && armDeployedSense.get()) {
                     currState = LifterStates.EXTEND;
                 }
@@ -79,16 +77,11 @@ public class Lifter {
                 if (xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)) {
                     currState = LifterStates.TRANSPORT;
                 }
-                //
-                // if(telescopePotentiometer.get() ==
-                // Vars.TELESCOPE_POTENTIOMETER_MAX ||
-                // telescopePotentiometer.get() ==
-                // Vars.TELESCOPE_POTENTIOMETER_MIN){
-                // telescopingMotor.set(0);
-                // }else{
-                // telescopingMotor.set(xbox.getAxisDeadBand(Axes.RIGHTy, .15));
-                // }
-                //
+                
+                //Enforce that the telescope can only go up!!
+                //FIXME: Could (should) do this with PID now
+                telescopingMotor.set(Math.abs(xbox.getAxes(Axes.LEFTy, 0.15)));
+                
                 if (xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON) && grabSense.get()) { 
                     currState = LifterStates.PULL_UP;
                 }
@@ -99,9 +92,9 @@ public class Lifter {
                 if (xbox.justPressed(Vars.LIFTER_ABORT_BUTTON)) {
                     currState = LifterStates.TRANSPORT;
                 }
-
-                pullUpMotor.set(-xbox.getAxes(Axes.RIGHTy, .15));
-                telescopingMotor.set(xbox.getAxes(Axes.LEFTy, 0.15));
+                
+                //Enforce that the winch can only go up!
+                pullUpMotor.set(Math.abs(xbox.getAxes(Axes.RIGHTy, .15)));
 
                 if (xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)) {
                     currState = LifterStates.LOCKED;
@@ -115,8 +108,7 @@ public class Lifter {
 
             case STARTUP_RESET:
                 telescopingMotor.set(xbox.getAxes(Axes.RIGHTy, .15));
-                // pullUpMotor.set(-xbox.getAxisDeadBand(Axes.RIGHTy,
-                // .15));//TODO direction
+                pullUpMotor.set(xbox.getAxes(Axes.RIGHTx, .15));
 
                 if (xbox.justPressed(Vars.LIFTER_ADVANCE_BUTTON)) {
                     currState = LifterStates.TRANSPORT;

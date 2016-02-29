@@ -97,7 +97,13 @@ public class Robot extends IterativeRobot {
         beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
         winch           = new CANTalon(Vars.WINCH_PORT);
         telescopeMotor  = new CANTalon(Vars.TELESCOPE_PORT);
+
+        //Assuming that these lets the CANTalon limit itself
         telescopeMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+        telescopeMotor.enableForwardSoftLimit(true);
+        telescopeMotor.enableReverseSoftLimit(true);
+        telescopeMotor.setForwardSoftLimit(Vars.TELESCOPE_ENC_UP_VALUE);
+        telescopeMotor.setReverseSoftLimit(Vars.TELESCOPE_ENC_DOWN_VALUE);
 
         // Sensors
         leftStick  = new Logitech(Vars.JOYSTICK_1_PORT);
@@ -119,7 +125,6 @@ public class Robot extends IterativeRobot {
                                                 new CANTalon(Vars.SHOOTER_AIM_PORT));
 
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
-        telescopeEncoder = new Encoder(Vars.TELESCOPE_ENCODER_PORT_A, Vars.TELESCOPE_ENCODER_PORT_B);
 
         shooterPot   = new AnalogPotentiometer(Vars.SHOOTER_POTENTIOMETER_PORT);
         beaterBarPot = new AnalogPotentiometer(Vars.BEATER_BAR_POTENTIOMETER_PORT);
