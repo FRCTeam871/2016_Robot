@@ -68,7 +68,7 @@ public class Robot extends IterativeRobot {
 
     CANTalon                  telescopeMotor, fireMotor1, fireMotor2;
 
-    DigitalInput              loadedSense, grabSense, armDeployedSense, shooterUpperLimit, shooterLowerLimit;
+    DigitalInput              grabSense, armDeployedSense, shooterUpperLimit, shooterLowerLimit;
 
     DoubleSolenoid            firePiston, liftPiston, lockSolenoid;
 
@@ -91,9 +91,13 @@ public class Robot extends IterativeRobot {
         
         fireMotor1      = new CANTalon(Vars.FIRE_MOTOR_1_PORT);
         fireMotor2      = new CANTalon(Vars.FIRE_MOTOR_2_PORT);
+        fireMotor1.enableBrakeMode(true);
+        fireMotor2.enableBrakeMode(true);
+        
         beaterBarRoller = new Talon(Vars.BEATER_BAR_ROLLER_PORT);
         winch           = new CANTalon(Vars.WINCH_PORT);
         telescopeMotor  = new CANTalon(Vars.TELESCOPE_PORT);
+        telescopeMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 
         // Sensors
         leftStick  = new Logitech(Vars.JOYSTICK_1_PORT);
@@ -106,7 +110,6 @@ public class Robot extends IterativeRobot {
         lockSolenoid = new DoubleSolenoid(Vars.LOCK_SOLENOID_FORWARD_PORT, Vars.LOCK_SOLENOID_REVERSE_PORT);
 
         grabSense         = new DigitalInput(Vars.GRAB_SENSE_PORT);
-        loadedSense       = new DigitalInput(Vars.LOADED_SENSE_PORT);
         armDeployedSense  = new DigitalInputActiveLow(Vars.ARM_DEPLOYED_SENSE_PORT);
         shooterUpperLimit = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
         shooterLowerLimit = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
@@ -130,12 +133,9 @@ public class Robot extends IterativeRobot {
         lift = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopePotentiometer,
                 winch, xbox, beaterBarPos);
         shoot = new Shooter(aimShooter, fireMotor1, fireMotor2, beaterBarPos, beaterBarRoller, firePiston, shooterPot,
-                beaterBarPot, loadedSense, tankDrive, shooterUpperLimit, shooterLowerLimit);
+                beaterBarPot, tankDrive);
 
         serial = new SerialPort(9600, Port.kMXP);
-
-        fireMotor1.enableBrakeMode(true);
-        fireMotor2.enableBrakeMode(true);
     }
 
     /**
@@ -189,10 +189,8 @@ public class Robot extends IterativeRobot {
         dashboard.putBoolean("manualMode", shoot.isManualControl());
 
         // Drive control
-        double leftAxis  = leftStick.getAxis(AxisType.Y, Vars.DEFAULT_AXIS_DEADBAND);
-        double rightAxis = rightStick.getAxis(AxisType.Y, Vars.DEFAULT_AXIS_DEADBAND);
-
-        telescopeMotor.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+        double leftAxis  = leftStick.getAxis(AxisType.Y, Vars.LOGITECH_AXIS_DEADBAND);
+        double rightAxis = rightStick.getAxis(AxisType.Y, Vars.LOGITECH_AXIS_DEADBAND);
 
         tankDrive.driveBothMotors(leftAxis, rightAxis);
 
@@ -203,17 +201,12 @@ public class Robot extends IterativeRobot {
         if (xbox.isToggled(Vars.MANUAL_MODE_TOGGLE_BUTTON)) {
             shoot.setManualMode(false);
 
-            if (leftStick.justPressed(ButtonType.THREE)) {
-                if (shoot.getCurrState() == ShootStates.LOAD_BOULDER) {
-                    shoot.setCurrState(ShootStates.MOVE_TRANSPORT);
-                }
-                else {
-                    shoot.setCurrState(ShootStates.MOVE_LOAD);
-                }
-
+            //Force the shooter into MOVE_TRANSPORT while the 3 button is held
+            if (leftStick.getButton(ButtonType.THREE)) {
+                shoot.setCurrState(ShootStates.MOVE_TRANSPORT);
             }
-
-            if (leftStick.justPressed(Vars.FIRE_BUTTON)) {
+            else if (leftStick.justPressed(Vars.FIRE_BUTTON)) {
+                //Otherwise allow the fire button to shoot!
                 shoot.setCurrState(ShootStates.AIM);
             }
         }

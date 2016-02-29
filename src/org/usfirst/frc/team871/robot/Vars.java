@@ -11,7 +11,11 @@ public class Vars {
     public static final long SPIN_UP_TIME               = 1000000000;
     public static final long SPIN_DOWN_TIME             = 500000000;
     public static final double DEFAULT_AXIS_DEADBAND   = 0.1;
+    public static final double LOGITECH_AXIS_DEADBAND  = .03;
 
+    public static final double BEATER_BAR_POT_DEPLOYED_SETPOINT = 0.46; 
+    public static final double BEATER_BAR_POT_FOLDED_SETPOINT   = 0.591;
+    
     //Ports
 
     //Talons
@@ -71,9 +75,6 @@ public class Vars {
     public static final byte   SHOOTER_POTENTIOMETER_PORT     =  0; //thrower angle
     public static final byte   BEATER_BAR_POTENTIOMETER_PORT  =  1; //beater bar
     public static final byte   SHOOTER_POT_TRANSPORT_POSITION =  0;
-
-    public static final double BEATER_BAR_POT_DEPLOYED_SETPOINT    = 0.46; 
-    public static final double BEATER_BAR_POT_FOLDED_SETPOINT    = 0.591; //TODO
 
     //le category
     public static final int TARGET_CENTER_OF_MASS_X_UPPER_BOUND = 163;
