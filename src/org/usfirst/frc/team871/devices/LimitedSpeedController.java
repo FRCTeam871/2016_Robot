@@ -1,14 +1,13 @@
 package org.usfirst.frc.team871.devices;
 
-import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.SpeedController;
 
 public class LimitedSpeedController implements SpeedController {
     SpeedController motor;
-    DigitalInput    upperLimit;
-    DigitalInput    lowerLimit;
+    LimitSwitch    upperLimit;
+    LimitSwitch    lowerLimit;
 
-    public LimitedSpeedController(DigitalInput upperLimit, DigitalInput lowerLimit, SpeedController motor) {
+    public LimitedSpeedController(LimitSwitch upperLimit, LimitSwitch lowerLimit, SpeedController motor) {
         this.motor = motor;
         this.upperLimit = upperLimit;
         this.lowerLimit = lowerLimit;
@@ -95,10 +94,10 @@ public class LimitedSpeedController implements SpeedController {
      */
     private double getLimitedSpeed(double speed) {// TODO: direction
         double limitedSpeed = 0;
-        if (upperLimit.get() && (speed > 0)) {
+        if (upperLimit.atLimit() && (speed > 0)) {
             limitedSpeed = 0;
         }
-        else if (lowerLimit.get() && (speed < 0)) {
+        else if (lowerLimit.atLimit() && (speed < 0)) {
             limitedSpeed = 0;
         }
         else {
@@ -113,7 +112,7 @@ public class LimitedSpeedController implements SpeedController {
      * @return
      */
     public boolean isAtLowerLimit() {
-        return lowerLimit.get();
+        return lowerLimit.atLimit();
     }
 
     /**
@@ -122,7 +121,7 @@ public class LimitedSpeedController implements SpeedController {
      * @return
      */
     public boolean isAtUpperLimit() {
-        return upperLimit.get();
+        return upperLimit.atLimit();
     }
 
 }

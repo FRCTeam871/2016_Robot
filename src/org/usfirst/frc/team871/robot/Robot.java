@@ -1,12 +1,15 @@
 
 package org.usfirst.frc.team871.robot;
 
+import org.usfirst.frc.team871.devices.PotentiometerLimitSwitch;
+import org.usfirst.frc.team871.devices.PotentiometerLimitSwitch.LimitDirection;
 import org.usfirst.frc.team871.devices.DigitalInputActiveLow;
+import org.usfirst.frc.team871.devices.DigitalLimitSwitch;
 import org.usfirst.frc.team871.devices.LimitedSpeedController;
 import org.usfirst.frc.team871.devices.Logitech;
-import org.usfirst.frc.team871.devices.XBoxController;
 import org.usfirst.frc.team871.devices.Logitech.AxisType;
 import org.usfirst.frc.team871.devices.Logitech.ButtonType;
+import org.usfirst.frc.team871.devices.XBoxController;
 import org.usfirst.frc.team871.robot.subsystems.Drive;
 import org.usfirst.frc.team871.robot.subsystems.Lifter;
 import org.usfirst.frc.team871.robot.subsystems.Shooter;
@@ -108,9 +111,9 @@ public class Robot extends IterativeRobot {
         shooterUpperLimit = new DigitalInput(Vars.SHOOTER_UPPER_LIMIT_PORT);
         shooterLowerLimit = new DigitalInput(Vars.SHOOTER_LOWER_LIMIT_PORT);
 
-        aimShooter = new LimitedSpeedController(shooterUpperLimit, shooterLowerLimit,
-                     new CANTalon(Vars.SHOOTER_AIM_PORT));
-        beaterBarPos = new Talon(Vars.BEATER_BAR_POS_PORT);
+        aimShooter = new LimitedSpeedController(new DigitalLimitSwitch(shooterUpperLimit), 
+                                                new DigitalLimitSwitch(shooterLowerLimit),
+                                                new CANTalon(Vars.SHOOTER_AIM_PORT));
 
         liftEncoder      = new Encoder(Vars.LIFT_ENCODER_PORT_A, Vars.LIFT_ENCODER_PORT_B);
         telescopeEncoder = new Encoder(Vars.TELESCOPE_ENCODER_PORT_A, Vars.TELESCOPE_ENCODER_PORT_B);
@@ -118,6 +121,10 @@ public class Robot extends IterativeRobot {
         shooterPot   = new AnalogPotentiometer(Vars.SHOOTER_POTENTIOMETER_PORT);
         beaterBarPot = new AnalogPotentiometer(Vars.BEATER_BAR_POTENTIOMETER_PORT);
 
+        beaterBarPos = new LimitedSpeedController(new PotentiometerLimitSwitch(beaterBarPot, Vars.BEATER_BAR_POT_FOLDED_SETPOINT, LimitDirection.Above),
+                                                  new PotentiometerLimitSwitch(beaterBarPot, Vars.BEATER_BAR_POT_DEPLOYED_SETPOINT, LimitDirection.Below),
+                                                  new Talon(Vars.BEATER_BAR_POS_PORT));
+        
         tankDrive = new Drive(driveL, driveR);
 
         lift = new Lifter(telescopeMotor, liftPiston, grabSense, armDeployedSense, lockSolenoid, telescopePotentiometer,
@@ -129,7 +136,6 @@ public class Robot extends IterativeRobot {
 
         fireMotor1.enableBrakeMode(true);
         fireMotor2.enableBrakeMode(true);
-
     }
 
     /**
